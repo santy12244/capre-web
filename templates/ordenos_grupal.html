@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+
+{% block title %}Ordeños - {{ hato['nombre'] if hato else 'CAPRE' }}{% endblock %}
+
+{% block content %}
+<!-- Modal de aviso al entrar -->
+<div class="modal fade" id="avisoOrdenosModal" tabindex="-1" aria-labelledby="avisoOrdenosModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="avisoOrdenosModalLabel">
+                    <i class="bi bi-exclamation-triangle"></i> Aviso Importante
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">
+                    <strong>Antes de digitar el pesaje de leche</strong> debe haber registrado todas las novedades del hato
+                    (servicios, secas, chequeos de preñez, partos y salidas).
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-holstein" data-bs-dismiss="modal">
+                    <i class="bi bi-check-lg"></i> Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmacion al salir -->
+<div class="modal fade" id="confirmarSalidaModal" tabindex="-1" aria-labelledby="confirmarSalidaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="confirmarSalidaModalLabel">
+                    <i class="bi bi-exclamation-octagon"></i> Confirmar Salida
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">
+                    <i class="bi bi-info-circle text-holstein"></i>
+                    Es <strong>esencial</strong> que todos los animales tengan su respectivo pesaje de leche,
+                    ya que es fundamental para calcular <strong>promedios estadisticos del hato</strong>.
+                </p>
+                <p class="mt-3 mb-0 text-muted">
+                    ¿Esta seguro que desea salir de esta pagina?
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-pencil"></i> Seguir Digitando
+                </button>
+                <button type="button" id="btnConfirmarSalida" class="btn btn-danger">
+                    <i class="bi bi-box-arrow-right"></i> Si, Salir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmacion pesaje alto -->
+<div class="modal fade" id="confirmarPesajeModal" tabindex="-1" aria-labelledby="confirmarPesajeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="confirmarPesajeModalLabel">
+                    <i class="bi bi-exclamation-triangle"></i> Confirmar Pesaje
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0 fs-5">
+                    El pesaje es superior a <strong>36 KG</strong>. ¿Esta seguro?
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="btnPesajeNo" class="btn btn-danger" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> No
+                </button>
+                <button type="button" id="btnPesajeSi" class="btn btn-holstein">
+                    <i class="bi bi-check-lg"></i> Si
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-holstein text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-droplet"></i> Registro de Ordeños - {{ hato['nombre'] if hato else '' }}
+                </h5>
+                <a href="{{ url_for('principal.index') }}" class="btn btn-light btn-sm">
+                    <i class="bi bi-arrow-left"></i> Volver a Captura
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-3">
+                    <p class="text-muted mb-0">
+                        Animales en produccion. Total: <strong>{{ animales|length }}</strong>
+                    </p>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <span class="text-muted d-none d-sm-inline">Ordenar:</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{{ url_for('principal.ordenos_grupal', orden='nombre_asc') }}"
+                               class="btn {{ 'btn-holstein' if orden == 'nombre_asc' else 'btn-outline-holstein' }}"
+                               title="Nombre A-Z">
+                                <i class="bi bi-sort-alpha-down"></i><span class="d-none d-sm-inline"> Nombre</span>
+                            </a>
+                            <a href="{{ url_for('principal.ordenos_grupal', orden='nombre_desc') }}"
+                               class="btn {{ 'btn-holstein' if orden == 'nombre_desc' else 'btn-outline-holstein' }}"
+                               title="Nombre Z-A">
+                                <i class="bi bi-sort-alpha-up"></i>
+                            </a>
+                        </div>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{{ url_for('principal.ordenos_grupal', orden='orejera_asc') }}"
+                               class="btn {{ 'btn-holstein' if orden == 'orejera_asc' else 'btn-outline-holstein' }}"
+                               title="Orejera menor a mayor">
+                                <i class="bi bi-sort-numeric-down"></i><span class="d-none d-sm-inline"> Orejera</span>
+                            </a>
+                            <a href="{{ url_for('principal.ordenos_grupal', orden='orejera_desc') }}"
+                               class="btn {{ 'btn-holstein' if orden == 'orejera_desc' else 'btn-outline-holstein' }}"
+                               title="Orejera mayor a menor">
+                                <i class="bi bi-sort-numeric-up"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-info mb-3" role="alert">
+                    <i class="bi bi-info-circle"></i> Los datos se guardan automáticamente al escribir
+                </div>
+
+                <div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-sm table-ordenos" style="table-layout: fixed; width: 100%;">
+                            <thead class="table-holstein">
+                                <tr>
+                                    <th class="d-none d-md-table-cell" style="width: 65px;">Orejera</th>
+                                    <th style="width: 120px;">Nombre</th>
+                                    <th class="d-none d-lg-table-cell" style="width: 85px;">Fec. Parto</th>
+                                    <th class="d-none d-md-table-cell" style="width: 50px;">Dias</th>
+                                    <th class="d-none d-lg-table-cell" style="width: 55px;">Ult.Lec</th>
+                                    <th style="width: 65px;">Ord1</th>
+                                    <th style="width: 65px;">Ord2</th>
+                                    <th style="width: 65px;">Ord3</th>
+                                    <th style="width: 60px;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for a in animales %}
+                                <tr>
+                                    <td class="align-middle d-none d-md-table-cell"><small>{{ a['orejera'] or '' }}</small></td>
+                                    <td class="align-middle fw-bold text-truncate" style="max-width: 120px;">
+                                        <span class="d-md-none text-muted" style="font-size:0.7rem;">{{ a['orejera'] or '' }}</span>
+                                        {{ a['nombre'] or '' }}
+                                    </td>
+                                    <td class="align-middle d-none d-lg-table-cell"><small>{{ (a['fecparto'] or a['fecest'])|fecha if (a['fecparto'] or a['fecest']) else '—' }}</small></td>
+                                    <td class="align-middle text-center d-none d-md-table-cell">{{ a['dialec'] or '—' }}</td>
+                                    <td class="align-middle text-center d-none d-lg-table-cell">{{ a['ultlec'] or '—' }}</td>
+                                    <td class="p-1">
+                                        <input type="number" step="0.1" min="0" max="99.9"
+                                               class="form-control form-control-sm ordeno-input"
+                                               name="ord1_{{ a['id'] }}"
+                                               value="{{ a['ord1'] if a['ord1'] is not none else '' }}"
+                                               data-row="{{ a['id'] }}"
+                                               inputmode="decimal">
+                                    </td>
+                                    <td class="p-1">
+                                        <input type="number" step="0.1" min="0" max="99.9"
+                                               class="form-control form-control-sm ordeno-input"
+                                               name="ord2_{{ a['id'] }}"
+                                               value="{{ a['ord2'] if a['ord2'] is not none else '' }}"
+                                               data-row="{{ a['id'] }}"
+                                               inputmode="decimal">
+                                    </td>
+                                    <td class="p-1">
+                                        <input type="number" step="0.1" min="0" max="99.9"
+                                               class="form-control form-control-sm ordeno-input"
+                                               name="ord3_{{ a['id'] }}"
+                                               value="{{ a['ord3'] if a['ord3'] is not none else '' }}"
+                                               data-row="{{ a['id'] }}"
+                                               inputmode="decimal">
+                                    </td>
+                                    <td class="align-middle text-center fw-bold">
+                                        <span id="total_{{ a['id'] }}">
+                                            {% set total = (a['ord1'] or 0) + (a['ord2'] or 0) + (a['ord3'] or 0) %}
+                                            {{ '%.1f'|format(total) if total > 0 else '—' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-warning">
+                                <tr>
+                                    <th class="text-end d-none d-md-table-cell" colspan="2">TOTAL:</th>
+                                    <th class="text-end d-md-none">TOT:</th>
+                                    <th class="d-none d-lg-table-cell"></th>
+                                    <th class="d-none d-md-table-cell"></th>
+                                    <th class="d-none d-lg-table-cell"></th>
+                                    <th class="text-center" id="total-col-ord1">—</th>
+                                    <th class="text-center" id="total-col-ord2">—</th>
+                                    <th class="text-center" id="total-col-ord3">—</th>
+                                    <th class="text-center" id="total-general">—</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Calcular totales por fila y columna
+function calcularTotales() {
+    var totalOrd1 = 0, totalOrd2 = 0, totalOrd3 = 0;
+
+    // Obtener todas las filas únicas
+    var rows = new Set();
+    document.querySelectorAll('.ordeno-input').forEach(function(input) {
+        rows.add(input.dataset.row);
+    });
+
+    rows.forEach(function(rowId) {
+        var ord1 = parseFloat(document.querySelector('[name="ord1_' + rowId + '"]').value) || 0;
+        var ord2 = parseFloat(document.querySelector('[name="ord2_' + rowId + '"]').value) || 0;
+        var ord3 = parseFloat(document.querySelector('[name="ord3_' + rowId + '"]').value) || 0;
+        var total = ord1 + ord2 + ord3;
+
+        document.getElementById('total_' + rowId).textContent = total > 0 ? total.toFixed(1) : '—';
+
+        totalOrd1 += ord1;
+        totalOrd2 += ord2;
+        totalOrd3 += ord3;
+    });
+
+    var totalGeneral = totalOrd1 + totalOrd2 + totalOrd3;
+
+    document.getElementById('total-col-ord1').textContent = totalOrd1 > 0 ? totalOrd1.toFixed(1) : '—';
+    document.getElementById('total-col-ord2').textContent = totalOrd2 > 0 ? totalOrd2.toFixed(1) : '—';
+    document.getElementById('total-col-ord3').textContent = totalOrd3 > 0 ? totalOrd3.toFixed(1) : '—';
+    document.getElementById('total-general').textContent = totalGeneral > 0 ? totalGeneral.toFixed(1) : '—';
+}
+
+// Auto-guardar ordeño individual con debounce
+var saveTimeouts = {};
+
+function autoGuardarOrdeno(animalId, campo, valor) {
+    var key = animalId + '_' + campo;
+
+    // Cancelar timeout anterior para este campo
+    if (saveTimeouts[key]) {
+        clearTimeout(saveTimeouts[key]);
+    }
+
+    // Esperar 800ms antes de guardar (debounce)
+    saveTimeouts[key] = setTimeout(function() {
+        fetch('{{ url_for("principal.auto_guardar_ordeno") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                animal_id: animalId,
+                campo: campo,
+                valor: valor
+            })
+        });
+        delete saveTimeouts[key];
+    }, 800);
+}
+
+// Variables para el modal de pesaje
+var inputPendiente = null;
+var confirmarPesajeModal = null;
+
+// Función para mover al siguiente input
+function moverAlSiguiente(inputActual) {
+    var inputs = Array.from(document.querySelectorAll('.ordeno-input'));
+    var idx = inputs.indexOf(inputActual);
+    if (idx >= 0 && idx < inputs.length - 1) {
+        inputs[idx + 1].focus();
+        inputs[idx + 1].select();
+    }
+}
+
+// Inicializar modal de pesaje
+document.addEventListener('DOMContentLoaded', function() {
+    confirmarPesajeModal = new bootstrap.Modal(document.getElementById('confirmarPesajeModal'));
+
+    // Botón Si del modal
+    document.getElementById('btnPesajeSi').addEventListener('click', function() {
+        if (inputPendiente) {
+            var animalId = inputPendiente.dataset.row;
+            var campo = inputPendiente.name.split('_')[0];
+            autoGuardarOrdeno(animalId, campo, inputPendiente.value);
+            calcularTotales();
+            confirmarPesajeModal.hide();
+            moverAlSiguiente(inputPendiente);
+            inputPendiente = null;
+        }
+    });
+
+    // Botón No del modal (también cuando se cierra)
+    document.getElementById('btnPesajeNo').addEventListener('click', function() {
+        if (inputPendiente) {
+            inputPendiente.value = '';
+            calcularTotales();
+            inputPendiente.focus();
+            inputPendiente = null;
+        }
+    });
+
+    // Si cierra el modal con X, también limpiar
+    document.getElementById('confirmarPesajeModal').addEventListener('hidden.bs.modal', function() {
+        if (inputPendiente) {
+            inputPendiente.value = '';
+            calcularTotales();
+            inputPendiente.focus();
+            inputPendiente = null;
+        }
+    });
+});
+
+// Ejecutar al cargar y al cambiar cualquier input
+document.querySelectorAll('.ordeno-input').forEach(function(input) {
+    input.addEventListener('change', function() {
+        var inputActual = this;
+        var valor = parseFloat(this.value) || 0;
+        var animalId = this.dataset.row;
+        var campo = this.name.split('_')[0]; // ord1, ord2, ord3
+
+        // Validar si el valor es mayor a 36
+        if (valor > 36) {
+            inputPendiente = inputActual;
+            confirmarPesajeModal.show();
+            return;
+        }
+
+        // Valor <= 36, guardar y avanzar
+        calcularTotales();
+        autoGuardarOrdeno(animalId, campo, this.value);
+        moverAlSiguiente(inputActual);
+    });
+
+    // También calcular totales mientras escribe (sin guardar)
+    input.addEventListener('input', function() {
+        calcularTotales();
+    });
+});
+calcularTotales();
+
+// Mostrar modal de aviso al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    var avisoModal = new bootstrap.Modal(document.getElementById('avisoOrdenosModal'));
+    avisoModal.show();
+});
+
+// Confirmar salida de la página
+var urlDestino = null;
+var confirmarSalidaModal = null;
+var enlacesOrdenamiento = [
+    '{{ url_for("principal.ordenos_grupal", orden="nombre_asc") }}',
+    '{{ url_for("principal.ordenos_grupal", orden="nombre_desc") }}',
+    '{{ url_for("principal.ordenos_grupal", orden="orejera_asc") }}',
+    '{{ url_for("principal.ordenos_grupal", orden="orejera_desc") }}'
+];
+
+document.addEventListener('DOMContentLoaded', function() {
+    confirmarSalidaModal = new bootstrap.Modal(document.getElementById('confirmarSalidaModal'));
+
+    // Interceptar todos los enlaces
+    document.querySelectorAll('a').forEach(function(enlace) {
+        enlace.addEventListener('click', function(e) {
+            var href = this.getAttribute('href');
+
+            // No interceptar enlaces de ordenamiento (misma página)
+            if (enlacesOrdenamiento.indexOf(href) !== -1) {
+                return;
+            }
+
+            // No interceptar enlaces vacíos o anclas
+            if (!href || href === '#' || href.startsWith('#')) {
+                return;
+            }
+
+            // Mostrar modal de confirmación
+            e.preventDefault();
+            urlDestino = href;
+            confirmarSalidaModal.show();
+        });
+    });
+
+    // Botón confirmar salida
+    document.getElementById('btnConfirmarSalida').addEventListener('click', function() {
+        if (urlDestino) {
+            window.location.href = urlDestino;
+        }
+    });
+});
+</script>
+{% endblock %}

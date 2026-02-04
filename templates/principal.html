@@ -1,0 +1,1584 @@
+{% extends "base.html" %}
+
+{% block title %}CAPRE - Captura de Novedades{% endblock %}
+
+{% block content %}
+
+{# ===== SECCION 1: INFORMACION DEL HATO ===== #}
+{% if hato['fecprbact'] %}
+{# Ya se guardo la info del hato: mostrar barra compacta con opcion de editar #}
+<div class="card mb-3 border-holstein">
+    <div class="card-header bg-holstein text-white py-2">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+            <div>
+                <i class="bi bi-building"></i>
+                <strong>{{ hato['hato'] }}</strong> — {{ hato['nombre'] }}
+                <span class="d-none d-lg-inline ms-3 text-light">{{ hato['propieta'] }}</span>
+            </div>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <span class="small d-none d-md-inline">
+                    <i class="bi bi-calendar-check"></i> <strong>{{ hato['fecprbact']|fecha }}</strong>
+                </span>
+                {% if hato['sumlec'] %}
+                <span class="small d-none d-lg-inline">
+                    <i class="bi bi-droplet"></i> <strong>{{ hato['sumlec']|int }}</strong>
+                </span>
+                {% endif %}
+                <a href="{{ url_for('principal.ver_tabla') }}" class="btn btn-sm btn-outline-light">
+                    <i class="bi bi-table"></i><span class="d-none d-sm-inline"> Tabla</span>
+                </a>
+                <button class="btn btn-sm btn-outline-light" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#hato-form">
+                    <i class="bi bi-pencil"></i><span class="d-none d-sm-inline"> Editar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="collapse" id="hato-form">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('principal.update_hato') }}" id="form-hato-editar">
+                <input type="hidden" id="fecultprb-edit" value="{{ hato['fecultprb'] or '' }}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold text-muted small">Ultima Prueba</label>
+                        <div class="form-control-plaintext">{{ hato['fecultprb']|fecha if hato['fecultprb'] else '—' }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="fecprbact" class="form-label fw-bold">
+                            Fecha de Validacion <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" class="form-control" id="fecprbact" name="fecprbact"
+                               value="{{ hato['fecprbact'] or '' }}" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="sumlec" class="form-label fw-bold">Total Leche Mes</label>
+                        <input type="number" class="form-control" id="sumlec" name="sumlec"
+                               value="{{ hato['sumlec'] or '' }}" step="1" min="0">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="elaboraa" class="form-label fw-bold">Elaborado por</label>
+                        <input type="text" class="form-control" id="elaboraa" name="elaboraa"
+                               value="{{ hato['elaboraa'] or '' }}" maxlength="20">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-holstein w-100">
+                            <i class="bi bi-check-lg"></i> Guardar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% else %}
+{# Primera vez: formulario completo visible para ingresar fecha de validacion #}
+<div class="card mb-3 border-holstein">
+    <div class="card-header bg-holstein text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-building"></i> Informacion del Hato</h5>
+        <span class="badge bg-light text-holstein fs-6">{{ hato['hato'] }}</span>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('principal.update_hato') }}" id="form-hato-nuevo">
+            <input type="hidden" id="fecultprb-nuevo" value="{{ hato['fecultprb'] or '' }}">
+            {# Info del hato - solo lectura #}
+            <div class="row g-2 mb-3">
+                <div class="col-6 col-md-4">
+                    <label class="form-label fw-bold text-muted small mb-1">Nombre</label>
+                    <div class="fw-bold">{{ hato['nombre'] }}</div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <label class="form-label fw-bold text-muted small mb-1">Propietario</label>
+                    <div>{{ hato['propieta'] }}</div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <label class="form-label fw-bold text-muted small mb-1">Ultima Prueba</label>
+                    <div>{{ hato['fecultprb']|fecha if hato['fecultprb'] else '—' }}</div>
+                </div>
+            </div>
+            {# Campos editables #}
+            <div class="row g-2 align-items-end">
+                <div class="col-6 col-md-3">
+                    <label for="fecprbact-nuevo" class="form-label fw-bold mb-1">
+                        Fecha Validacion <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" class="form-control" id="fecprbact-nuevo" name="fecprbact"
+                           value="" required>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label for="sumlec" class="form-label fw-bold mb-1">Total Leche</label>
+                    <input type="number" class="form-control" id="sumlec" name="sumlec"
+                           value="" step="1" min="0">
+                </div>
+                <div class="col-6 col-md-3">
+                    <label for="elaboraa" class="form-label fw-bold mb-1">Elaborado por</label>
+                    <input type="text" class="form-control" id="elaboraa" name="elaboraa"
+                           value="" maxlength="20">
+                </div>
+                <div class="col-6 col-md-3">
+                    <button type="submit" class="btn btn-holstein w-100">
+                        <i class="bi bi-check-lg"></i> Guardar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="alert alert-warning text-center py-4">
+    <i class="bi bi-exclamation-triangle display-6"></i>
+    <h5 class="mt-2">Fecha de Validacion Requerida</h5>
+    <p>Debe ingresar la <strong>Fecha de Validacion</strong> en la seccion de arriba antes de poder digitar novedades.</p>
+</div>
+{% endif %}
+
+{% if hato['fecprbact'] %}
+
+{# ===== SECCION 2: INFORMACION BASICA DEL ANIMAL ===== #}
+{% if animal %}
+{% set estado_map = {'0': 'Ternera', '1': 'Vaca parida', '2': 'Novilla parida', '3': 'Ing. seca', '4': 'Ing. produccion', '5': 'Aborto', '6': 'Seca'} %}
+{% set estado_color = {'0': 'secondary', '1': 'success', '2': 'success', '3': 'warning', '4': 'info', '5': 'danger', '6': 'dark'} %}
+{% set est = animal['estado']|string %}
+{% set pac_map = {'A': 'Abierta', 'a': 'Abierta', 'P': 'Preñada', 'p': 'Preñada'} %}
+{% set pac_color = {'A': 'danger', 'a': 'danger', 'P': 'success', 'p': 'success'} %}
+{% set pac_val = animal['pac']|string|trim %}
+
+<div class="card mb-3 border-holstein" id="card-animal">
+    <div class="card-header bg-holstein text-white py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-tag"></i> Informacion del Animal</span>
+            <span class="badge bg-light text-dark" id="animal-contador">{{ animal_idx + 1 }} de {{ total_animales }}</span>
+        </div>
+    </div>
+    <div class="card-body">
+        {# Fila 1: Identificacion y estado #}
+        <div class="row g-2 g-md-3 mb-3">
+            <div class="col-6 col-sm-4 col-md-2">
+                <span class="text-muted small d-block">Orejera</span>
+                <span class="fs-5 fw-bold" id="animal-orejera">{{ animal['orejera'] }}</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-3">
+                <span class="text-muted small d-block">Nombre</span>
+                <span class="fs-5 fw-bold" id="animal-nombre">{{ animal['nombre'] }}</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-2">
+                <span class="text-muted small d-block">Codigo</span>
+                <span id="animal-codint">{{ animal['codint'] }}</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-2">
+                <span class="text-muted small d-block">Registro</span>
+                <span id="animal-registro">{{ animal['registro'] or '—' }}</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-2">
+                <span class="text-muted small d-block">Estado</span>
+                <span class="badge bg-{{ estado_color.get(est, 'secondary') }}" id="animal-estado">{{ estado_map.get(est, est or '—') }}</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-1">
+                <span class="text-muted small d-block">Diagnost.</span>
+                <span id="animal-diagnostico">{% if pac_val %}<span class="badge bg-{{ pac_color.get(pac_val, 'secondary') }}">{{ pac_map.get(pac_val, pac_val) }}</span>{% else %}—{% endif %}</span>
+            </div>
+        </div>
+
+        {# Fila 2: Produccion y reproduccion #}
+        <div class="row g-2 g-md-3 py-2 bg-light rounded">
+            <div class="col-6 col-sm-4 col-md-2">
+                <span class="text-muted small d-block">Ult. Leche</span>
+                <span class="fw-semibold" id="animal-ultlec">{{ animal['ultlec'] or '—' }} kg</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-2">
+                <span class="text-muted small d-block">Dias Lactando</span>
+                <span class="fw-semibold" id="animal-dialec">{{ animal['dialec'] or '—' }}</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-2">
+                <span class="text-muted small d-block"># Servicios</span>
+                <span class="fw-semibold" id="animal-numser">{{ animal['numser'] or '0' }}</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-2">
+                <span class="text-muted small d-block">Fec. Ult. Serv.</span>
+                <span id="animal-fecultser">{{ animal['fecultser']|fecha or '—' }}</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-2">
+                <span class="text-muted small d-block">Toro</span>
+                <span id="animal-toro">{{ animal['codtor'] or animal['toro'] or '—' }}</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-2">
+                <span class="text-muted small d-block">Clasif./Ptos</span>
+                <span id="animal-clasi">{{ animal['clasi'] or '—' }} {% if animal['ptos'] %}/ {{ animal['ptos'] }}{% endif %}</span>
+            </div>
+        </div>
+
+        {# Navigation buttons #}
+        <div class="nav-animal-container mt-3 pt-3 border-top">
+            {# Quick search dropdown - primera fila en movil #}
+            <div class="dropdown nav-search-dropdown">
+                <button class="btn btn-holstein dropdown-toggle w-100" type="button"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    <i class="bi bi-search"></i> Buscar Animal
+                </button>
+                <div class="dropdown-menu p-3" style="width: 300px; max-width: 90vw;">
+                    <input type="text" class="form-control mb-2" id="buscar-animal"
+                           placeholder="Escriba nombre u orejera..." autofocus>
+                    <div id="lista-animales" style="max-height: 250px; overflow-y: auto;">
+                        {% for a in animales %}
+                        <button type="button" class="dropdown-item animal-item small nav-animal"
+                                data-idx="{{ loop.index0 }}"
+                                data-search="{{ a['orejera']|lower }} {{ a['nombre']|lower }}">
+                            <strong>{{ a['orejera'] }}</strong> — {{ a['nombre'] }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            {# Botones de navegacion #}
+            <div class="nav-buttons-grid">
+                <button type="button" class="btn btn-outline-holstein nav-animal" data-idx="0" id="btn-primero"
+                        {{ 'disabled' if animal_idx == 0 }}>
+                    <i class="bi bi-skip-start-fill"></i><span class="d-none d-sm-inline"> Primero</span>
+                </button>
+                <button type="button" class="btn btn-outline-holstein nav-animal" data-idx="{{ animal_idx - 1 }}" id="btn-anterior"
+                        {{ 'disabled' if animal_idx == 0 }}>
+                    <i class="bi bi-caret-left-fill"></i><span class="d-none d-sm-inline"> Anterior</span>
+                </button>
+                <button type="button" class="btn btn-outline-holstein nav-animal" data-idx="{{ animal_idx + 1 }}" id="btn-proximo"
+                        {{ 'disabled' if animal_idx >= total_animales - 1 }}>
+                    <span class="d-none d-sm-inline">Proximo </span><i class="bi bi-caret-right-fill"></i>
+                </button>
+                <button type="button" class="btn btn-outline-holstein nav-animal" data-idx="{{ total_animales - 1 }}" id="btn-ultimo"
+                        {{ 'disabled' if animal_idx >= total_animales - 1 }}>
+                    <span class="d-none d-sm-inline">Ultimo </span><i class="bi bi-skip-end-fill"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="current-animal-idx" value="{{ animal_idx }}">
+<input type="hidden" id="total-animales" value="{{ total_animales }}">
+<input type="hidden" id="current-tab" value="{{ tab }}">
+<input type="hidden" id="current-animal-id" value="{{ animal['id'] }}">
+<input type="hidden" id="current-fecultser" value="{{ animal['fecultser'] or '' }}">
+<input type="hidden" id="api-base-url" value="{{ url_for('principal.api_get_animal', idx=0)|replace('/0', '/') }}">
+<input type="hidden" id="page-base-url" value="{{ url_for('principal.index') }}">
+
+{# ===== SECCION 3: PESTANAS DE NOVEDADES ===== #}
+<div class="card border-secondary">
+    <div class="card-header p-0">
+        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link nav-tab {{ 'active' if tab == 'servicios' }}" data-tab="servicios"
+                   href="{{ url_for('principal.index', idx=animal_idx, tab='servicios') }}">
+                    <i class="bi bi-heart-pulse"></i> Servicios
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link nav-tab {{ 'active' if tab == 'secas' }}" data-tab="secas"
+                   href="{{ url_for('principal.index', idx=animal_idx, tab='secas') }}">
+                    <i class="bi bi-pause-circle"></i> Secas
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link nav-tab {{ 'active' if tab == 'chequeo' }}" data-tab="chequeo"
+                   href="{{ url_for('principal.index', idx=animal_idx, tab='chequeo') }}">
+                    <i class="bi bi-clipboard2-pulse"></i> Chequeo
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link nav-tab {{ 'active' if tab == 'partos' }}" data-tab="partos"
+                   href="{{ url_for('principal.index', idx=animal_idx, tab='partos') }}">
+                    <i class="bi bi-stars"></i> Partos
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link nav-tab {{ 'active' if tab == 'salidas' }}" data-tab="salidas"
+                   href="{{ url_for('principal.index', idx=animal_idx, tab='salidas') }}">
+                    <i class="bi bi-box-arrow-right"></i> Salidas
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link nav-tab {{ 'active' if tab == 'sanitario' }}" data-tab="sanitario"
+                   href="{{ url_for('principal.index', idx=animal_idx, tab='sanitario') }}">
+                    <i class="bi bi-heart-pulse-fill"></i> Sanitario
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body">
+
+        {# ---- TAB: SERVICIOS ---- #}
+        {% if tab == 'servicios' %}
+        <h6 class="text-muted mb-3">Digite la informacion correspondiente a Servicios</h6>
+        <form method="POST" action="{{ url_for('principal.update_servicios', animal_id=animal['id']) }}" id="form-servicios">
+            <input type="hidden" name="idx" value="{{ animal_idx }}">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Fecha Servicio</label>
+                    <input type="date" class="form-control" name="fecser" value="{{ animal['fecser'] or '' }}" min="{{ fecha_min_servicio }}" max="{{ fecha_max }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Nombre o Codigo del Toro</label>
+                    <input type="text" class="form-control text-uppercase" name="toro" value="{{ animal['toro'] or '' }}" maxlength="15">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Calor</label>
+                    <select class="form-select" name="calor">
+                        <option value="" {{ 'selected' if not animal['calor'] }}>— Sin novedad —</option>
+                        <option value="S" {{ 'selected' if animal['calor'] == 'S' }}>S - Calor perdido</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button type="submit" class="btn btn-holstein">
+                    {% if animal['fecser'] or animal['toro'] or animal['calor'] %}
+                    <i class="bi bi-arrow-repeat"></i> Actualizar Servicio
+                    {% else %}
+                    <i class="bi bi-floppy"></i> Guardar Servicio
+                    {% endif %}
+                </button>
+                {% if animal['fecser'] or animal['toro'] or animal['calor'] %}
+                <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalBorrarServicio">
+                    <i class="bi bi-trash"></i> Borrar
+                </button>
+                {% endif %}
+            </div>
+        </form>
+        {% if animal['fecser'] or animal['toro'] or animal['calor'] %}
+        <div class="modal fade" id="modalBorrarServicio" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirmar eliminacion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ¿Esta seguro que desea eliminar los datos del servicio?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <form method="POST" action="{{ url_for('principal.borrar_servicios', animal_id=animal['id']) }}" style="display:inline;">
+                            <input type="hidden" name="idx" value="{{ animal_idx }}">
+                            <button type="submit" class="btn btn-danger">Si, eliminar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ---- TAB: SECAS ---- #}
+        {% elif tab == 'secas' %}
+        <h6 class="text-muted mb-3">Digite la informacion correspondiente a Secas</h6>
+        {% set est = animal['estado']|string %}
+        {% if est in ['1', '2'] %}
+        <form method="POST" action="{{ url_for('principal.update_secas', animal_id=animal['id']) }}" id="form-secas">
+            <input type="hidden" name="idx" value="{{ animal_idx }}">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Fecha Seca</label>
+                    <input type="date" class="form-control" name="fecseca" value="{{ animal['fecseca'] or '' }}" min="{{ fecha_min }}" max="{{ fecha_max }}">
+                </div>
+            </div>
+            <div class="mt-3">
+                <button type="submit" class="btn btn-holstein">
+                    {% if animal['fecseca'] %}
+                    <i class="bi bi-arrow-repeat"></i> Actualizar Seca
+                    {% else %}
+                    <i class="bi bi-floppy"></i> Guardar Seca
+                    {% endif %}
+                </button>
+                {% if animal['fecseca'] %}
+                <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalBorrarSeca">
+                    <i class="bi bi-trash"></i> Borrar
+                </button>
+                {% endif %}
+            </div>
+        </form>
+        {% if animal['fecseca'] %}
+        <div class="modal fade" id="modalBorrarSeca" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirmar eliminacion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ¿Esta seguro que desea eliminar la fecha de seca?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <form method="POST" action="{{ url_for('principal.borrar_secas', animal_id=animal['id']) }}" style="display:inline;">
+                            <input type="hidden" name="idx" value="{{ animal_idx }}">
+                            <button type="submit" class="btn btn-danger">Si, eliminar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            Solo se puede secar un animal en estado <strong>1 - Vaca parida</strong> o <strong>2 - Novilla parida</strong>.
+            Este animal esta en estado <strong>{{ est }} - {{ {'0': 'Ternera', '1': 'Vaca parida', '2': 'Novilla parida', '3': 'Ing. seca', '4': 'Ing. produccion', '5': 'Aborto', '6': 'Seca'}.get(est, est) }}</strong>.
+        </div>
+        {% endif %}
+
+        {# ---- TAB: CHEQUEO PREÑEZ ---- #}
+        {% elif tab == 'chequeo' %}
+        <h6 class="text-muted mb-3">Digite la informacion correspondiente a Chequeo de Preñez</h6>
+        {% set tiene_servicio = animal['numser'] and animal['numser'] > 0 %}
+        {% set esta_prenada = animal['pac'] and animal['pac']|upper|trim == 'P' %}
+
+        {% if not tiene_servicio %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            Solo se puede chequear preñez de un animal que tenga al menos un servicio registrado.
+            Este animal tiene <strong>0 servicios</strong>.
+        </div>
+        {% elif esta_prenada %}
+        {# Animal ya confirmado Preñada - mostrar alerta primero #}
+        <div class="alert alert-success" id="alerta-ya-prenada">
+            <i class="bi bi-check-circle"></i>
+            Este animal ya esta confirmado como <strong>Preñada</strong>.
+            <br>¿Desea volver a realizar un chequeo?
+            <div class="mt-2">
+                <button type="button" class="btn btn-sm btn-warning" id="btn-rechequear-si">
+                    <i class="bi bi-check-lg"></i> Si, volver a chequear
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" id="btn-rechequear-no">
+                    <i class="bi bi-x-lg"></i> No
+                </button>
+            </div>
+        </div>
+        <div id="form-chequeo" style="display:none;">
+        <form method="POST" action="{{ url_for('principal.update_chequeo', animal_id=animal['id']) }}" id="form-chequeo-submit">
+            <input type="hidden" name="idx" value="{{ animal_idx }}">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Fecha Chequeo</label>
+                    <input type="date" class="form-control" name="fecchp" value="{{ animal['fecchp'] or '' }}" min="{{ fecha_min }}" max="{{ fecha_max }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Diagnostico</label>
+                    <select class="form-select" name="panew">
+                        <option value="" {{ 'selected' if not animal['panew'] }}>— Seleccione —</option>
+                        <option value="P" {{ 'selected' if animal['panew'] == 'P' }}>P - Preñada</option>
+                        <option value="A" {{ 'selected' if animal['panew'] == 'A' }}>A - Abierta</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button type="submit" class="btn btn-holstein">
+                    <i class="bi bi-arrow-repeat"></i> Actualizar Chequeo
+                </button>
+                {% if animal['fecchp'] or animal['panew'] %}
+                <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalBorrarChequeo">
+                    <i class="bi bi-trash"></i> Borrar
+                </button>
+                {% endif %}
+            </div>
+        </form>
+        </div>
+        {% else %}
+        {# Animal sin diagnostico o con diagnostico diferente a Preñada #}
+        <form method="POST" action="{{ url_for('principal.update_chequeo', animal_id=animal['id']) }}" id="form-chequeo-submit">
+            <input type="hidden" name="idx" value="{{ animal_idx }}">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Fecha Chequeo</label>
+                    <input type="date" class="form-control" name="fecchp" value="{{ animal['fecchp'] or '' }}" min="{{ fecha_min }}" max="{{ fecha_max }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Diagnostico</label>
+                    <select class="form-select" name="panew">
+                        <option value="" {{ 'selected' if not animal['panew'] }}>— Seleccione —</option>
+                        <option value="P" {{ 'selected' if animal['panew'] == 'P' }}>P - Preñada</option>
+                        <option value="A" {{ 'selected' if animal['panew'] == 'A' }}>A - Abierta</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button type="submit" class="btn btn-holstein">
+                    {% if animal['fecchp'] or animal['panew'] %}
+                    <i class="bi bi-arrow-repeat"></i> Actualizar Chequeo
+                    {% else %}
+                    <i class="bi bi-floppy"></i> Guardar Chequeo
+                    {% endif %}
+                </button>
+                {% if animal['fecchp'] or animal['panew'] %}
+                <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalBorrarChequeo">
+                    <i class="bi bi-trash"></i> Borrar
+                </button>
+                {% endif %}
+            </div>
+        </form>
+        {% endif %}
+        {% if animal['fecchp'] or animal['panew'] %}
+        <div class="modal fade" id="modalBorrarChequeo" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirmar eliminacion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ¿Esta seguro que desea eliminar los datos del chequeo de preñez?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <form method="POST" action="{{ url_for('principal.borrar_chequeo', animal_id=animal['id']) }}" style="display:inline;">
+                            <input type="hidden" name="idx" value="{{ animal_idx }}">
+                            <button type="submit" class="btn btn-danger">Si, eliminar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ---- TAB: PARTOS ---- #}
+        {% elif tab == 'partos' %}
+        <h6 class="text-muted mb-3">Digite la informacion correspondiente a Partos</h6>
+        {% set est = animal['estado']|string %}
+        {% set puede_parir = est in ['0', '6'] or animal['fecseca'] %}
+        {% set tiene_servicio = animal['numser'] and animal['numser'] > 0 %}
+
+        {# Alerta sin servicio (para estados permitidos) #}
+        {% if puede_parir and not tiene_servicio %}
+        <div class="alert alert-warning" id="alerta-sin-servicio">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>No hay ningun servicio reportado para este animal.</strong>
+            ¿Desea agregar el parto de todas formas?
+            <div class="mt-2">
+                <button type="button" class="btn btn-sm btn-holstein" id="btn-parto-si">
+                    <i class="bi bi-check-lg"></i> Si
+                </button>
+                <button type="button" class="btn btn-sm btn-danger" id="btn-parto-no">
+                    <i class="bi bi-x-lg"></i> No
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Alerta estado no permitido: ofrecer registrar aborto #}
+        {% if not puede_parir %}
+        <div class="alert alert-info" id="alerta-estado-parto">
+            <i class="bi bi-info-circle"></i>
+            Este animal esta en estado <strong>{{ est }} - {{ {'0': 'Ternera', '1': 'Vaca parida', '2': 'Novilla parida', '3': 'Ing. seca', '4': 'Ing. produccion', '5': 'Aborto', '6': 'Seca'}.get(est, est) }}</strong>
+            y no tiene fecha de seca registrada, por lo que no se puede registrar un parto normal.
+            <br>¿Desea registrar un <strong>aborto</strong>?
+            <div class="mt-2">
+                <button type="button" class="btn btn-sm btn-warning" id="btn-aborto-si">
+                    <i class="bi bi-check-lg"></i> Si, registrar aborto
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" id="btn-aborto-no">
+                    <i class="bi bi-x-lg"></i> No
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
+        <div id="form-partos" {% if not puede_parir or (puede_parir and not tiene_servicio) %}style="display:none;"{% endif %}>
+        <form method="POST" action="{{ url_for('principal.update_partos', animal_id=animal['id']) }}" id="form-partos-submit">
+            <input type="hidden" name="idx" value="{{ animal_idx }}">
+            <input type="hidden" name="forzar_aborto" id="forzar_aborto" value="0">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Fecha Parto</label>
+                    <input type="date" class="form-control" name="fecparto" value="{{ animal['fecparto'] or '' }}" min="{{ fecha_min }}" max="{{ fecha_max }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Tipo Parto</label>
+                    <select class="form-select" name="tipoparto" id="sel-tipoparto">
+                        <option value="" {{ 'selected' if not animal['tipoparto'] }}>— Seleccione —</option>
+                        <option value="P" {{ 'selected' if animal['tipoparto'] == 'P' }}>P - Parto</option>
+                        <option value="A" {{ 'selected' if animal['tipoparto'] == 'A' }}>A - Aborto</option>
+                        <option value="I" {{ 'selected' if animal['tipoparto'] == 'I' }}>I - Parto inducido</option>
+                    </select>
+                </div>
+            </div>
+
+            <h6 class="mt-4 text-muted">Cria 1</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Destino</label>
+                    <select class="form-select" name="hacer1">
+                        <option value="" {{ 'selected' if not animal['hacer1'] }}>— Seleccione —</option>
+                        <option value="D" {{ 'selected' if animal['hacer1'] == 'D' }}>D - Dejar</option>
+                        <option value="V" {{ 'selected' if animal['hacer1'] == 'V' }}>V - Vender</option>
+                        <option value="M" {{ 'selected' if animal['hacer1'] == 'M' }}>M - Murio</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Orejera Cria</label>
+                    <input type="text" class="form-control text-uppercase" name="orecria1" value="{{ animal['orecria1'] or '' }}" maxlength="9">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Nombre Cria</label>
+                    <input type="text" class="form-control text-uppercase" name="nomcria1" value="{{ animal['nomcria1'] or '' }}" maxlength="10">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Sexo</label>
+                    <select class="form-select" name="sexcria1">
+                        <option value="" {{ 'selected' if not animal['sexcria1'] }}>—</option>
+                        <option value="M" {{ 'selected' if animal['sexcria1'] == 'M' }}>M - Macho</option>
+                        <option value="H" {{ 'selected' if animal['sexcria1'] == 'H' }}>H - Hembra</option>
+                    </select>
+                </div>
+            </div>
+
+            <h6 class="mt-3 text-muted">Cria 2 (si es parto doble)</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Destino</label>
+                    <select class="form-select" name="hacer2">
+                        <option value="" {{ 'selected' if not animal['hacer2'] }}>— Seleccione —</option>
+                        <option value="D" {{ 'selected' if animal['hacer2'] == 'D' }}>D - Dejar</option>
+                        <option value="V" {{ 'selected' if animal['hacer2'] == 'V' }}>V - Vender</option>
+                        <option value="M" {{ 'selected' if animal['hacer2'] == 'M' }}>M - Murio</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Orejera Cria</label>
+                    <input type="text" class="form-control text-uppercase" name="orecria2" value="{{ animal['orecria2'] or '' }}" maxlength="9">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Nombre Cria</label>
+                    <input type="text" class="form-control text-uppercase" name="nomcria2" value="{{ animal['nomcria2'] or '' }}" maxlength="10">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Sexo</label>
+                    <select class="form-select" name="sexcria2">
+                        <option value="" {{ 'selected' if not animal['sexcria2'] }}>—</option>
+                        <option value="M" {{ 'selected' if animal['sexcria2'] == 'M' }}>M - Macho</option>
+                        <option value="H" {{ 'selected' if animal['sexcria2'] == 'H' }}>H - Hembra</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button type="submit" class="btn btn-holstein">
+                    {% if animal['fecparto'] or animal['tipoparto'] %}
+                    <i class="bi bi-arrow-repeat"></i> Actualizar Parto
+                    {% else %}
+                    <i class="bi bi-floppy"></i> Guardar Parto
+                    {% endif %}
+                </button>
+                {% if animal['fecparto'] or animal['tipoparto'] %}
+                <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalBorrarParto">
+                    <i class="bi bi-trash"></i> Borrar
+                </button>
+                {% endif %}
+            </div>
+        </form>
+        </div>
+        {% if animal['fecparto'] or animal['tipoparto'] %}
+        <div class="modal fade" id="modalBorrarParto" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirmar eliminacion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ¿Esta seguro que desea eliminar los datos del parto y las crias?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <form method="POST" action="{{ url_for('principal.borrar_partos', animal_id=animal['id']) }}" style="display:inline;">
+                            <input type="hidden" name="idx" value="{{ animal_idx }}">
+                            <button type="submit" class="btn btn-danger">Si, eliminar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ---- TAB: SALIDAS ---- #}
+        {% elif tab == 'salidas' %}
+        <h6 class="text-muted mb-3">Digite la informacion correspondiente a Salidas</h6>
+        <form method="POST" action="{{ url_for('principal.update_salidas', animal_id=animal['id']) }}" id="form-salidas">
+            <input type="hidden" name="idx" value="{{ animal_idx }}">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Fecha Salida</label>
+                    <input type="date" class="form-control" name="fecsale" value="{{ animal['fecsale'] or '' }}" min="{{ fecha_min }}" max="{{ fecha_max }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Motivo Salida</label>
+                    <select class="form-select" name="motsale">
+                        <option value="" {{ 'selected' if not animal['motsale'] }}>— Seleccione —</option>
+                        <option value="7" {{ 'selected' if animal['motsale'] == '7' }}>7 - Venta Leche</option>
+                        <option value="8" {{ 'selected' if animal['motsale'] == '8' }}>8 - Venta Carne</option>
+                        <option value="9" {{ 'selected' if animal['motsale'] == '9' }}>9 - Murio</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button type="submit" class="btn btn-holstein">
+                    {% if animal['fecsale'] or animal['motsale'] %}
+                    <i class="bi bi-arrow-repeat"></i> Actualizar Salida
+                    {% else %}
+                    <i class="bi bi-floppy"></i> Guardar Salida
+                    {% endif %}
+                </button>
+                {% if animal['fecsale'] or animal['motsale'] %}
+                <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalBorrarSalida">
+                    <i class="bi bi-trash"></i> Borrar
+                </button>
+                {% endif %}
+            </div>
+        </form>
+        {% if animal['fecsale'] or animal['motsale'] %}
+        <div class="modal fade" id="modalBorrarSalida" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirmar eliminacion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ¿Esta seguro que desea eliminar los datos de salida?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <form method="POST" action="{{ url_for('principal.borrar_salidas', animal_id=animal['id']) }}" style="display:inline;">
+                            <input type="hidden" name="idx" value="{{ animal_idx }}">
+                            <button type="submit" class="btn btn-danger">Si, eliminar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ---- TAB: REGISTRO SANITARIO ---- #}
+        {% elif tab == 'sanitario' %}
+        <h6 class="text-muted mb-3">Digite la informacion correspondiente a Registro Sanitario</h6>
+        <form method="POST" action="{{ url_for('principal.update_sanitario', animal_id=animal['id']) }}" id="form-sanitario">
+            <input type="hidden" name="idx" value="{{ animal_idx }}">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Novedad Sanitaria</label>
+                    <select class="form-select" name="cart">
+                        <option value="" {{ 'selected' if not animal['cart'] }}>— Seleccione —</option>
+                        <option value="S" {{ 'selected' if animal['cart'] == 'S' }}>S - Enferma</option>
+                        <option value="M" {{ 'selected' if animal['cart'] == 'M' }}>M - Mastitis aguda</option>
+                        <option value="U" {{ 'selected' if animal['cart'] == 'U' }}>U - Lesion de ubre</option>
+                        <option value="T" {{ 'selected' if animal['cart'] == 'T' }}>T - Perdida muestra de leche</option>
+                        <option value="L" {{ 'selected' if animal['cart'] == 'L' }}>L - Perdida peso de leche</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button type="submit" class="btn btn-holstein">
+                    {% if animal['cart'] %}
+                    <i class="bi bi-arrow-repeat"></i> Actualizar Sanitario
+                    {% else %}
+                    <i class="bi bi-floppy"></i> Guardar Sanitario
+                    {% endif %}
+                </button>
+                {% if animal['cart'] %}
+                <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalBorrarSanitario">
+                    <i class="bi bi-trash"></i> Borrar
+                </button>
+                {% endif %}
+            </div>
+        </form>
+        {% if animal['cart'] %}
+        <div class="modal fade" id="modalBorrarSanitario" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirmar eliminacion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ¿Esta seguro que desea eliminar el registro sanitario?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <form method="POST" action="{{ url_for('principal.borrar_sanitario', animal_id=animal['id']) }}" style="display:inline;">
+                            <input type="hidden" name="idx" value="{{ animal_idx }}">
+                            <button type="submit" class="btn btn-danger">Si, eliminar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% endif %}
+
+    </div>
+</div>
+
+{% else %}
+<div class="alert alert-info text-center">No hay animales en la tabla de novedades.</div>
+{% endif %}
+
+{% endif %} {# end if fecprbact #}
+
+<script>
+// ========== MODAL DE ERRORES DE VALIDACION ==========
+function mostrarModalError(titulo, errores) {
+    // Eliminar modal anterior si existe
+    var modalAnterior = document.getElementById('modalErrorValidacion');
+    if (modalAnterior) modalAnterior.remove();
+
+    // Crear modal
+    var modalHtml = '<div class="modal fade" id="modalErrorValidacion" tabindex="-1" aria-hidden="true">' +
+        '<div class="modal-dialog modal-dialog-centered">' +
+        '<div class="modal-content border-danger">' +
+        '<div class="modal-header bg-danger text-white py-2">' +
+        '<h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> ' + titulo + '</h5>' +
+        '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+        '<ul class="mb-0">' + errores.map(function(err) { return '<li>' + err + '</li>'; }).join('') + '</ul>' +
+        '</div>' +
+        '<div class="modal-footer py-2">' +
+        '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>' +
+        '</div>' +
+        '</div></div></div>';
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    var modal = new bootstrap.Modal(document.getElementById('modalErrorValidacion'));
+    modal.show();
+}
+
+// ========== VALIDACION FECHA DE VALIDACION DEL HATO ==========
+function validarFechaValidacion(form, inputFecha, inputFecultprb) {
+    var fecprbact = inputFecha.value;
+    var fecultprb = inputFecultprb.value;
+    var hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    var errores = [];
+
+    if (!fecprbact) {
+        errores.push('La <strong>Fecha de Validacion</strong> es obligatoria.');
+        return errores;
+    }
+
+    var fechaValidacion = new Date(fecprbact + 'T00:00:00');
+
+    // 1. No puede ser mayor a hoy
+    if (fechaValidacion > hoy) {
+        errores.push('La <strong>Fecha de Validacion</strong> no puede ser mayor a la fecha de hoy.');
+    }
+
+    // Validaciones que dependen de fecultprb
+    if (fecultprb) {
+        var fechaUltPrueba = new Date(fecultprb + 'T00:00:00');
+
+        // 2. No puede ser inferior a la fecha de la ultima prueba
+        if (fechaValidacion < fechaUltPrueba) {
+            errores.push('La <strong>Fecha de Validacion</strong> no puede ser anterior a la Ultima Prueba (' + formatoFechaPartos(fecultprb) + ').');
+        }
+
+        // 3. No puede ser mayor a 45 dias despues de la ultima prueba
+        var fechaLimite = new Date(fechaUltPrueba);
+        fechaLimite.setDate(fechaLimite.getDate() + 45);
+        if (fechaValidacion > fechaLimite) {
+            errores.push('La <strong>Fecha de Validacion</strong> no puede ser mayor a 45 dias despues de la Ultima Prueba (limite: ' + formatoFechaPartos(fechaLimite.toISOString().split('T')[0]) + ').');
+        }
+    }
+
+    return errores;
+}
+
+// Vincular validacion a formularios del hato
+(function() {
+    // Formulario editar (cuando ya existe fecprbact)
+    var formEditar = document.getElementById('form-hato-editar');
+    if (formEditar) {
+        formEditar.addEventListener('submit', function(e) {
+            var inputFecha = document.getElementById('fecprbact');
+            var inputFecultprb = document.getElementById('fecultprb-edit');
+            var errores = validarFechaValidacion(formEditar, inputFecha, inputFecultprb);
+            if (errores.length > 0) {
+                e.preventDefault();
+                mostrarModalError('Error en Fecha de Validacion', errores);
+            }
+        });
+    }
+
+    // Formulario nuevo (primera vez)
+    var formNuevo = document.getElementById('form-hato-nuevo');
+    if (formNuevo) {
+        formNuevo.addEventListener('submit', function(e) {
+            var inputFecha = document.getElementById('fecprbact-nuevo');
+            var inputFecultprb = document.getElementById('fecultprb-nuevo');
+            var errores = validarFechaValidacion(formNuevo, inputFecha, inputFecultprb);
+            if (errores.length > 0) {
+                e.preventDefault();
+                mostrarModalError('Error en Fecha de Validacion', errores);
+            }
+        });
+    }
+})();
+
+// Animal search filter
+document.getElementById('buscar-animal')?.addEventListener('input', function() {
+    const query = this.value.toLowerCase();
+    document.querySelectorAll('.animal-item').forEach(function(item) {
+        const text = item.getAttribute('data-search');
+        item.style.display = text.includes(query) ? '' : 'none';
+    });
+});
+
+// Chequeo Preñez: Botones para rechequear animal ya preñado
+document.getElementById('btn-rechequear-si')?.addEventListener('click', function() {
+    document.getElementById('alerta-ya-prenada').style.display = 'none';
+    document.getElementById('form-chequeo').style.display = '';
+});
+document.getElementById('btn-rechequear-no')?.addEventListener('click', function() {
+    document.getElementById('alerta-ya-prenada').innerHTML =
+        '<i class="bi bi-info-circle"></i> El animal mantiene su diagnostico de <strong>Preñada</strong>.';
+    document.getElementById('alerta-ya-prenada').className = 'alert alert-info';
+});
+
+// Servicios: Calor perdido bloquea campo toro
+(function() {
+    var form = document.getElementById('form-servicios');
+    if (!form) return;
+
+    var selectCalor = form.querySelector('[name="calor"]');
+    var inputToro = form.querySelector('[name="toro"]');
+
+    function actualizarCampoToro() {
+        if (selectCalor.value === 'S') {
+            inputToro.value = 'CALOR PER';
+            inputToro.readOnly = true;
+            inputToro.classList.add('bg-light');
+        } else {
+            if (inputToro.value === 'CALOR PER') {
+                inputToro.value = '';
+            }
+            inputToro.readOnly = false;
+            inputToro.classList.remove('bg-light');
+        }
+    }
+
+    // Ejecutar al cargar la página
+    actualizarCampoToro();
+
+    // Ejecutar cuando cambie la selección
+    selectCalor.addEventListener('change', actualizarCampoToro);
+})();
+
+// Partos: Si/No buttons for animals without service
+document.getElementById('btn-parto-si')?.addEventListener('click', function() {
+    document.getElementById('alerta-sin-servicio').style.display = 'none';
+    document.getElementById('form-partos').style.display = '';
+});
+document.getElementById('btn-parto-no')?.addEventListener('click', function() {
+    document.getElementById('alerta-sin-servicio').innerHTML =
+        '<i class="bi bi-info-circle"></i> No se registrara el parto. Puede agregar un servicio primero desde la pestana <strong>Servicios</strong>.';
+    document.getElementById('alerta-sin-servicio').className = 'alert alert-info';
+});
+
+// Partos: Aborto option for animals in non-permitted states
+document.getElementById('btn-aborto-si')?.addEventListener('click', function() {
+    document.getElementById('alerta-estado-parto').style.display = 'none';
+    document.getElementById('form-partos').style.display = '';
+    document.getElementById('forzar_aborto').value = '1';
+    // Pre-seleccionar tipo parto = Aborto y bloquear cambio
+    var sel = document.getElementById('sel-tipoparto');
+    if (sel) { sel.value = 'A'; sel.disabled = true; }
+    // Agregar hidden para que el valor se envie aunque este disabled
+    var hidden = document.createElement('input');
+    hidden.type = 'hidden'; hidden.name = 'tipoparto'; hidden.value = 'A';
+    document.getElementById('form-partos').querySelector('form').appendChild(hidden);
+});
+document.getElementById('btn-aborto-no')?.addEventListener('click', function() {
+    document.getElementById('alerta-estado-parto').innerHTML =
+        '<i class="bi bi-info-circle"></i> No se registrara el parto para este animal.';
+});
+
+// Funcion auxiliar para formatear fechas
+function formatoFechaPartos(fechaStr) {
+    var meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+    var d = new Date(fechaStr);
+    var dia = String(d.getDate()).padStart(2, '0');
+    var mes = meses[d.getMonth()];
+    var anio = d.getFullYear();
+    return dia + '/' + mes + '/' + anio;
+}
+
+// Obtener fecultser desde el DOM
+function getFecultser() {
+    var el = document.getElementById('current-fecultser');
+    return el ? el.value : '';
+}
+
+// Partos: Validar 152 dias entre fecultser (ultimo servicio) y fecparto para abortos forzados
+function initValidacion152Dias() {
+    var forzar = document.getElementById('forzar_aborto');
+    var inputFecha = document.querySelector('#form-partos input[name="fecparto"]');
+    var btnGrabar = document.querySelector('#form-partos button[type="submit"]');
+    if (!inputFecha || !forzar || inputFecha.dataset.val152Init) return;
+    inputFecha.dataset.val152Init = 'true';
+
+    inputFecha.addEventListener('change', function() {
+        var fecultser = getFecultser();
+        if (forzar.value !== '1' || !fecultser) return;
+        var dServicio = new Date(fecultser);
+        var dParto = new Date(this.value);
+        var dias = Math.floor((dParto - dServicio) / (1000 * 60 * 60 * 24));
+
+        var alertaExistente = document.getElementById('alerta-152-dias');
+        if (alertaExistente) alertaExistente.remove();
+
+        if (dias < 152) {
+            btnGrabar.disabled = true;
+            var alerta = document.createElement('div');
+            alerta.id = 'alerta-152-dias';
+            alerta.className = 'alert alert-danger mt-3';
+            alerta.innerHTML = '<i class="bi bi-x-circle"></i> No se puede registrar el aborto. ' +
+                'Deben transcurrir al menos <strong>152 dias</strong> desde la Fec. Ult. Serv. (' + formatoFechaPartos(fecultser) + '). ' +
+                'Dias transcurridos: <strong>' + dias + '</strong>. Esto se reporta como <strong>Abierta</strong> en <strong>Chequeo de Preñez</strong>.';
+            inputFecha.closest('.row').after(alerta);
+        } else {
+            btnGrabar.disabled = false;
+        }
+    });
+}
+initValidacion152Dias();
+
+// Partos: Validar 265 dias entre fecultser (ultimo servicio) y fecparto
+function initValidacion265Dias() {
+    var inputFecha = document.querySelector('#form-partos input[name="fecparto"]');
+    if (!inputFecha || inputFecha.dataset.val265Init) return;
+    inputFecha.dataset.val265Init = 'true';
+
+    inputFecha.addEventListener('change', function() {
+        var fecultser = getFecultser();
+        if (!fecultser) return;
+
+        var alertaExistente = document.getElementById('alerta-265-dias');
+        if (alertaExistente) alertaExistente.remove();
+
+        var dServicio = new Date(fecultser);
+        var dParto = new Date(this.value);
+        var dias = Math.floor((dParto - dServicio) / (1000 * 60 * 60 * 24));
+
+        if (dias < 265) {
+            var alerta = document.createElement('div');
+            alerta.id = 'alerta-265-dias';
+            alerta.className = 'alert alert-warning mt-3';
+            alerta.innerHTML = '<i class="bi bi-exclamation-triangle"></i> ' +
+                'Solo hay <strong>' + dias + ' dias</strong> entre el ultimo servicio (' + formatoFechaPartos(fecultser) + ') y la fecha de parto. ' +
+                '¿Se trata de un <strong>aborto</strong> o un <strong>parto normal</strong>?';
+            inputFecha.closest('.row').after(alerta);
+        }
+    });
+}
+initValidacion265Dias();
+
+// ========== NAVEGACION AJAX ==========
+(function() {
+    var currentIdx = parseInt(document.getElementById('current-animal-idx')?.value || 0);
+    var totalAnimales = parseInt(document.getElementById('total-animales')?.value || 0);
+    var currentTab = document.getElementById('current-tab')?.value || 'servicios';
+    var pageBaseUrl = document.getElementById('page-base-url')?.value || '/principal';
+    var isLoading = false;
+
+    // Reinicializar scripts del formulario despues de actualizar el DOM
+    function reinitFormScripts() {
+        // Re-vincular filtro de busqueda de animales
+        var buscarInput = document.getElementById('buscar-animal');
+        if (buscarInput) {
+            buscarInput.addEventListener('input', function() {
+                var query = this.value.toLowerCase();
+                document.querySelectorAll('.animal-item').forEach(function(item) {
+                    var text = item.getAttribute('data-search');
+                    item.style.display = text.includes(query) ? '' : 'none';
+                });
+            });
+        }
+
+        // Re-vincular botones de navegacion
+        document.querySelectorAll('.nav-animal').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var idx = parseInt(this.dataset.idx);
+                if (!isNaN(idx)) {
+                    loadAnimal(idx);
+                    var dropdown = this.closest('.dropdown-menu');
+                    if (dropdown) {
+                        var bsDropdown = bootstrap.Dropdown.getInstance(dropdown.previousElementSibling);
+                        if (bsDropdown) bsDropdown.hide();
+                    }
+                }
+            });
+        });
+
+        // Re-vincular botones de rechequeo prenez
+        var btnRechequearSi = document.getElementById('btn-rechequear-si');
+        if (btnRechequearSi) {
+            btnRechequearSi.addEventListener('click', function() {
+                document.getElementById('alerta-ya-prenada').style.display = 'none';
+                document.getElementById('form-chequeo').style.display = '';
+            });
+        }
+        var btnRechequearNo = document.getElementById('btn-rechequear-no');
+        if (btnRechequearNo) {
+            btnRechequearNo.addEventListener('click', function() {
+                document.getElementById('alerta-ya-prenada').innerHTML =
+                    '<i class="bi bi-info-circle"></i> El animal mantiene su diagnostico de <strong>Prenada</strong>.';
+                document.getElementById('alerta-ya-prenada').className = 'alert alert-info';
+            });
+        }
+
+        // Re-vincular logica de calor perdido en servicios
+        var formServicios = document.getElementById('form-servicios');
+        if (formServicios) {
+            var selectCalor = formServicios.querySelector('[name="calor"]');
+            var inputToro = formServicios.querySelector('[name="toro"]');
+            if (selectCalor && inputToro) {
+                function actualizarCampoToro() {
+                    if (selectCalor.value === 'S') {
+                        inputToro.value = 'CALOR PER';
+                        inputToro.readOnly = true;
+                        inputToro.classList.add('bg-light');
+                    } else {
+                        if (inputToro.value === 'CALOR PER') inputToro.value = '';
+                        inputToro.readOnly = false;
+                        inputToro.classList.remove('bg-light');
+                    }
+                }
+                actualizarCampoToro();
+                selectCalor.addEventListener('change', actualizarCampoToro);
+            }
+        }
+
+        // Re-vincular botones de parto sin servicio
+        var btnPartoSi = document.getElementById('btn-parto-si');
+        if (btnPartoSi) {
+            btnPartoSi.addEventListener('click', function() {
+                document.getElementById('alerta-sin-servicio').style.display = 'none';
+                document.getElementById('form-partos').style.display = '';
+            });
+        }
+        var btnPartoNo = document.getElementById('btn-parto-no');
+        if (btnPartoNo) {
+            btnPartoNo.addEventListener('click', function() {
+                document.getElementById('alerta-sin-servicio').innerHTML =
+                    '<i class="bi bi-info-circle"></i> No se registrara el parto. Puede agregar un servicio primero desde la pestana <strong>Servicios</strong>.';
+                document.getElementById('alerta-sin-servicio').className = 'alert alert-info';
+            });
+        }
+
+        // Re-vincular botones de aborto
+        var btnAbortoSi = document.getElementById('btn-aborto-si');
+        if (btnAbortoSi) {
+            btnAbortoSi.addEventListener('click', function() {
+                document.getElementById('alerta-estado-parto').style.display = 'none';
+                document.getElementById('form-partos').style.display = '';
+                document.getElementById('forzar_aborto').value = '1';
+                var sel = document.getElementById('sel-tipoparto');
+                if (sel) { sel.value = 'A'; sel.disabled = true; }
+                var hidden = document.createElement('input');
+                hidden.type = 'hidden'; hidden.name = 'tipoparto'; hidden.value = 'A';
+                document.getElementById('form-partos').querySelector('form').appendChild(hidden);
+            });
+        }
+        var btnAbortoNo = document.getElementById('btn-aborto-no');
+        if (btnAbortoNo) {
+            btnAbortoNo.addEventListener('click', function() {
+                document.getElementById('alerta-estado-parto').innerHTML =
+                    '<i class="bi bi-info-circle"></i> No se registrara el parto para este animal.';
+            });
+        }
+
+        // Reinicializar validaciones especiales de partos
+        initValidacion152Dias();
+        initValidacion265Dias();
+    }
+
+    function loadAnimal(idx) {
+        if (isLoading || idx < 0 || idx >= totalAnimales) return;
+        isLoading = true;
+
+        var url = pageBaseUrl + '?idx=' + idx + '&tab=' + currentTab;
+
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(response) {
+            if (!response.ok) throw new Error('Error de red');
+            return response.text();
+        })
+        .then(function(html) {
+            // Parsear el HTML recibido
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+
+            // Extraer y reemplazar el card del animal
+            var newCardAnimal = doc.getElementById('card-animal');
+            var oldCardAnimal = document.getElementById('card-animal');
+            if (newCardAnimal && oldCardAnimal) {
+                oldCardAnimal.outerHTML = newCardAnimal.outerHTML;
+            }
+
+            // Extraer y reemplazar el card de tabs (novedades)
+            var newCardTabs = doc.querySelector('.card.border-secondary');
+            var oldCardTabs = document.querySelector('.card.border-secondary');
+            if (newCardTabs && oldCardTabs) {
+                oldCardTabs.outerHTML = newCardTabs.outerHTML;
+            }
+
+            // Actualizar campos hidden
+            var newIdx = doc.getElementById('current-animal-idx');
+            var newAnimalId = doc.getElementById('current-animal-id');
+            var newFecultser = doc.getElementById('current-fecultser');
+            if (newIdx) {
+                document.getElementById('current-animal-idx').value = newIdx.value;
+                currentIdx = parseInt(newIdx.value);
+            }
+            if (newAnimalId) {
+                document.getElementById('current-animal-id').value = newAnimalId.value;
+            }
+            if (newFecultser) {
+                document.getElementById('current-fecultser').value = newFecultser.value;
+            }
+
+            // Actualizar URL sin recargar la pagina
+            history.pushState({ idx: currentIdx, tab: currentTab }, '', url);
+
+            // Reinicializar scripts
+            reinitFormScripts();
+            reinitTabListeners();
+
+            // Vincular formularios AJAX (importante despues de cargar animal)
+            if (typeof window.bindFormsNovedades === 'function') {
+                window.bindFormsNovedades();
+            }
+
+            isLoading = false;
+        })
+        .catch(function(error) {
+            console.error('Error cargando animal:', error);
+            window.location.href = url;
+        });
+    }
+
+    // Event listeners para botones de navegacion
+    document.querySelectorAll('.nav-animal').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var idx = parseInt(this.dataset.idx);
+            if (!isNaN(idx)) {
+                loadAnimal(idx);
+                // Cerrar dropdown si esta abierto
+                var dropdown = this.closest('.dropdown-menu');
+                if (dropdown) {
+                    var bsDropdown = bootstrap.Dropdown.getInstance(dropdown.previousElementSibling);
+                    if (bsDropdown) bsDropdown.hide();
+                }
+            }
+        });
+    });
+
+    // Manejar navegacion con teclas
+    document.addEventListener('keydown', function(e) {
+        // Solo si no estamos en un input/textarea
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+        if (e.key === 'ArrowLeft' || e.key === 'a') {
+            loadAnimal(currentIdx - 1);
+        } else if (e.key === 'ArrowRight' || e.key === 'd') {
+            loadAnimal(currentIdx + 1);
+        }
+    });
+
+    // Manejar boton atras del navegador
+    window.addEventListener('popstate', function(e) {
+        if (e.state && typeof e.state.idx !== 'undefined') {
+            currentIdx = e.state.idx;
+            currentTab = e.state.tab || currentTab;
+            loadAnimal(e.state.idx);
+        }
+    });
+
+    // Guardar estado inicial en el historial
+    history.replaceState({ idx: currentIdx, tab: currentTab }, '', window.location.href);
+
+    // Funcion para cargar tab via AJAX
+    function loadTab(tabName) {
+        if (isLoading || tabName === currentTab) return;
+        isLoading = true;
+
+        var url = pageBaseUrl + '?idx=' + currentIdx + '&tab=' + tabName;
+
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(response) {
+            if (!response.ok) throw new Error('Error de red');
+            return response.text();
+        })
+        .then(function(html) {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+
+            // Reemplazar solo el card de tabs
+            var newCardTabs = doc.querySelector('.card.border-secondary');
+            var oldCardTabs = document.querySelector('.card.border-secondary');
+            if (newCardTabs && oldCardTabs) {
+                oldCardTabs.outerHTML = newCardTabs.outerHTML;
+            }
+
+            // Actualizar tab actual
+            currentTab = tabName;
+            document.getElementById('current-tab').value = tabName;
+
+            // Actualizar URL
+            history.pushState({ idx: currentIdx, tab: currentTab }, '', url);
+
+            // Reinicializar scripts
+            reinitFormScripts();
+            reinitTabListeners();
+
+            // Vincular formularios AJAX (importante despues de cambiar tab)
+            if (typeof window.bindFormsNovedades === 'function') {
+                window.bindFormsNovedades();
+            }
+
+            isLoading = false;
+        })
+        .catch(function(error) {
+            console.error('Error cargando tab:', error);
+            window.location.href = url;
+        });
+    }
+
+    // Vincular eventos a los tabs
+    function reinitTabListeners() {
+        document.querySelectorAll('.nav-tab').forEach(function(tab) {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                var tabName = this.dataset.tab;
+                if (tabName) loadTab(tabName);
+            });
+        });
+    }
+
+    // Inicializar listeners de tabs
+    reinitTabListeners();
+})();
+
+// ===== AJAX PARA FORMULARIOS DE NOVEDADES =====
+(function() {
+    // Formularios que usaran AJAX
+    var formIds = [
+        'form-servicios',
+        'form-secas',
+        'form-chequeo-submit',
+        'form-partos-submit',
+        'form-salidas',
+        'form-sanitario'
+    ];
+
+    // Funcion para mostrar mensaje de exito/error
+    function showMessage(message, isSuccess) {
+        // Buscar o crear contenedor de mensajes
+        var container = document.getElementById('ajax-message');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'ajax-message';
+            container.style.cssText = 'position:fixed;top:70px;right:20px;z-index:9999;max-width:300px;';
+            document.body.appendChild(container);
+        }
+
+        var alert = document.createElement('div');
+        alert.className = 'alert alert-' + (isSuccess ? 'success' : 'danger') + ' alert-dismissible fade show';
+        alert.innerHTML = '<i class="bi bi-' + (isSuccess ? 'check-circle' : 'exclamation-circle') + '"></i> ' +
+                          message +
+                          '<button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>';
+        container.appendChild(alert);
+
+        // Auto-cerrar despues de 3 segundos
+        setTimeout(function() {
+            if (alert.parentNode) {
+                alert.classList.remove('show');
+                setTimeout(function() { alert.remove(); }, 150);
+            }
+        }, 3000);
+    }
+
+    // Funcion para validar formulario antes de enviar
+    function validarFormulario(form) {
+        var errores = [];
+        var formId = form.id || '';
+
+        // Validacion de Servicios
+        if (formId === 'form-servicios' || form.action.includes('/servicios')) {
+            var fecser = form.querySelector('[name="fecser"]')?.value || '';
+            var toro = (form.querySelector('[name="toro"]')?.value || '').trim();
+            var calor = form.querySelector('[name="calor"]')?.value || '';
+
+            if (!fecser) {
+                errores.push('La <strong>Fecha de Servicio</strong> es obligatoria.');
+            }
+            if (!toro && !calor) {
+                errores.push('Debe ingresar el <strong>Nombre o Codigo del Toro</strong> o seleccionar <strong>Calor perdido</strong>.');
+            }
+        }
+
+        // Validacion de Secas
+        if (formId === 'form-secas' || form.action.includes('/secas')) {
+            var fecseca = form.querySelector('[name="fecseca"]')?.value || '';
+            if (!fecseca) {
+                errores.push('La <strong>Fecha de Seca</strong> es obligatoria.');
+            }
+        }
+
+        // Validacion de Chequeo
+        if (formId === 'form-chequeo-submit' || form.action.includes('/chequeo')) {
+            var fecchp = form.querySelector('[name="fecchp"]')?.value || '';
+            var panew = form.querySelector('[name="panew"]')?.value || '';
+
+            if (!fecchp) {
+                errores.push('La <strong>Fecha de Chequeo</strong> es obligatoria.');
+            }
+            if (!panew) {
+                errores.push('El <strong>Diagnostico</strong> es obligatorio.');
+            }
+        }
+
+        // Validacion de Salidas
+        if (formId === 'form-salidas' || form.action.includes('/salidas')) {
+            var fecsale = form.querySelector('[name="fecsale"]')?.value || '';
+            var motsale = form.querySelector('[name="motsale"]')?.value || '';
+
+            if (!fecsale) {
+                errores.push('La <strong>Fecha de Salida</strong> es obligatoria.');
+            }
+            if (!motsale) {
+                errores.push('El <strong>Motivo de Salida</strong> es obligatorio.');
+            }
+        }
+
+        // Validacion de Sanitario
+        if (formId === 'form-sanitario' || form.action.includes('/sanitario')) {
+            var cart = form.querySelector('[name="cart"]')?.value || '';
+            if (!cart) {
+                errores.push('Debe seleccionar una <strong>Novedad Sanitaria</strong>.');
+            }
+        }
+
+        // Validacion de Partos
+        if (formId === 'form-partos-submit' || form.action.includes('/partos')) {
+            var fecparto = form.querySelector('[name="fecparto"]')?.value || '';
+            var tipoparto = form.querySelector('[name="tipoparto"]')?.value || '';
+            var hacer1 = form.querySelector('[name="hacer1"]')?.value || '';
+            var sexcria1 = form.querySelector('[name="sexcria1"]')?.value || '';
+            var hacer2 = form.querySelector('[name="hacer2"]')?.value || '';
+            var sexcria2 = form.querySelector('[name="sexcria2"]')?.value || '';
+
+            if (!fecparto) {
+                errores.push('La <strong>Fecha de Parto</strong> es obligatoria.');
+            }
+            if (!tipoparto) {
+                errores.push('El <strong>Tipo de Parto</strong> es obligatorio.');
+            }
+            if (tipoparto === 'P' && hacer1 === 'D' && !sexcria1) {
+                errores.push('Si el destino de la <strong>Cria 1</strong> es "Dejar", debe seleccionar el <strong>Sexo</strong>.');
+            }
+            if (tipoparto === 'P' && hacer2 === 'D' && !sexcria2) {
+                errores.push('Si el destino de la <strong>Cria 2</strong> es "Dejar", debe seleccionar el <strong>Sexo</strong>.');
+            }
+        }
+
+        return errores;
+    }
+
+    function mostrarErroresValidacion(form, errores) {
+        // Eliminar alertas anteriores
+        var alertaAnterior = form.querySelector('.alerta-validacion-ajax');
+        if (alertaAnterior) alertaAnterior.remove();
+
+        if (errores.length > 0) {
+            var alerta = document.createElement('div');
+            alerta.className = 'alert alert-danger mt-3 alerta-validacion-ajax';
+            alerta.innerHTML = '<i class="bi bi-x-circle"></i> <strong>Errores de validacion:</strong><ul class="mb-0 mt-2">' +
+                errores.map(function(err) { return '<li>' + err + '</li>'; }).join('') + '</ul>';
+            var btn = form.querySelector('button[type="submit"]');
+            if (btn) btn.before(alerta);
+            return false;
+        }
+        return true;
+    }
+
+    // Funcion para enviar formulario via AJAX
+    function submitFormAjax(form, e) {
+        e.preventDefault();
+
+        // Validar antes de enviar
+        var errores = validarFormulario(form);
+        if (!mostrarErroresValidacion(form, errores)) {
+            return; // No enviar si hay errores
+        }
+
+        var submitBtn = form.querySelector('button[type="submit"]');
+        var originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+
+        var formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(function(response) {
+            return response.json().then(function(data) {
+                return { ok: response.ok, data: data };
+            });
+        })
+        .then(function(result) {
+            showMessage(result.data.message, result.ok);
+            if (result.ok) {
+                // Actualizar texto del boton a "Actualizar"
+                submitBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Actualizar';
+            } else {
+                submitBtn.innerHTML = originalText;
+            }
+            submitBtn.disabled = false;
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+            showMessage('Error de conexion', false);
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    }
+
+    // Vincular formularios existentes
+    function bindForms() {
+        formIds.forEach(function(formId) {
+            var form = document.getElementById(formId);
+            if (form && !form.dataset.ajaxBound) {
+                form.dataset.ajaxBound = 'true';
+                form.addEventListener('submit', function(e) {
+                    submitFormAjax(form, e);
+                });
+            }
+        });
+    }
+
+    // Vincular al cargar y despues de cada cambio de tab/animal
+    bindForms();
+
+    // Exponer funcion globalmente para que pueda ser llamada desde loadTab
+    window.bindFormsNovedades = bindForms;
+})();
+
+</script>
+{% endblock %}

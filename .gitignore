@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+
+# Datos locales
+data/
+uploads/
+exports/
+*.db
+*.sqlite
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Archivos temporales
+*.tmp
+*.log
+*.zip
+
+# Archivos de referencia (imagenes de prueba)
+refrencia/
+
+# Archivos DBF de prueba
+*.dbf
+
+# Claude Code
+.claude/
+
+# Archivos Windows
+nul
+
+# Scripts locales de empaquetado
+crear_zip.ps1
+create-zip.ps1

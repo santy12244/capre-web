@@ -1,0 +1,730 @@
+{% extends "base.html" %}
+
+{% block title %}Novillas - {{ hato['nombre'] if hato else 'CAPRE' }}{% endblock %}
+
+{% block content %}
+
+{# ===== INFORMACION DEL HATO ===== #}
+<div class="card mb-3 border-holstein">
+    <div class="card-header bg-holstein text-white py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <i class="bi bi-gender-female"></i>
+                <strong>NOVILLAS</strong> — {{ hato['nombre'] if hato else '' }}
+            </div>
+            <span class="badge bg-light text-dark">{{ total_animales }} novillas</span>
+        </div>
+    </div>
+</div>
+
+{% if animal %}
+{% set pac_val = animal['pac']|string|upper|trim if animal['pac'] else '' %}
+{% set pac_map = {'A': 'Abierta', 'P': 'Preñada'} %}
+{% set pac_color = {'A': 'danger', 'P': 'success'} %}
+
+{# ===== INFORMACION BASICA DEL ANIMAL ===== #}
+<div class="card mb-3 border-holstein" id="card-novilla">
+    <div class="card-header bg-holstein text-white py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-gender-female"></i> Informacion de la Novilla</span>
+            <span class="badge bg-light text-dark" id="novilla-contador">{{ animal_idx + 1 }} de {{ total_animales }}</span>
+        </div>
+    </div>
+    <div class="card-body">
+        {# Fila 1: Identificacion #}
+        <div class="row g-2 g-md-3 mb-3">
+            <div class="col-6 col-sm-4 col-md-2">
+                <span class="text-muted small d-block">Orejera</span>
+                <span class="fs-5 fw-bold" id="novilla-orejera">{{ animal['orejera'] }}</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-3">
+                <span class="text-muted small d-block">Nombre</span>
+                <span class="fs-5 fw-bold" id="novilla-nombre">{{ animal['nombre'] }}</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-2">
+                <span class="text-muted small d-block">Codigo</span>
+                <span id="novilla-codint">{{ animal['codint'] }}</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-2">
+                <span class="text-muted small d-block">Registro</span>
+                <span id="novilla-registro">{{ animal['registro'] or '—' }}</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-2">
+                <span class="text-muted small d-block">Fec. Nacimiento</span>
+                <span id="novilla-fecest">{{ animal['fecest']|fecha if animal['fecest'] else '—' }}</span>
+            </div>
+            <div class="col-6 col-sm-4 col-md-1">
+                <span class="text-muted small d-block">Diagnost.</span>
+                <span id="novilla-diagnostico">{% if pac_val %}<span class="badge bg-{{ pac_color.get(pac_val, 'secondary') }}">{{ pac_map.get(pac_val, pac_val) }}</span>{% else %}—{% endif %}</span>
+            </div>
+        </div>
+
+        {# Fila 2: Reproduccion #}
+        <div class="row g-2 g-md-3 py-2 bg-light rounded">
+            <div class="col-4 col-sm-4 col-md-2">
+                <span class="text-muted small d-block"># Servicios</span>
+                <span class="fw-semibold" id="novilla-numser">{{ animal['numser'] or '0' }}</span>
+            </div>
+            <div class="col-4 col-sm-4 col-md-3">
+                <span class="text-muted small d-block">Fec. Ult. Serv.</span>
+                <span id="novilla-fecultser">{{ animal['fecultser']|fecha if animal['fecultser'] else '—' }}</span>
+            </div>
+            <div class="col-4 col-sm-4 col-md-3">
+                <span class="text-muted small d-block">Toro</span>
+                <span id="novilla-toro">{{ animal['codtor'] or animal['toro'] or '—' }}</span>
+            </div>
+        </div>
+
+        {# Navigation buttons #}
+        <div class="nav-animal-container mt-3 pt-3 border-top">
+            {# Quick search dropdown - primera fila en movil #}
+            <div class="dropdown nav-search-dropdown">
+                <button class="btn btn-holstein dropdown-toggle w-100" type="button"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    <i class="bi bi-search"></i> Buscar Novilla
+                </button>
+                <div class="dropdown-menu p-3" style="width: 300px; max-width: 90vw;">
+                    <input type="text" class="form-control mb-2" id="buscar-novilla"
+                           placeholder="Escriba nombre u orejera..." autofocus>
+                    <div id="lista-novillas" style="max-height: 250px; overflow-y: auto;">
+                        {% for a in animales %}
+                        <button type="button" class="dropdown-item novilla-item small nav-novilla"
+                                data-idx="{{ loop.index0 }}"
+                                data-search="{{ a['orejera']|lower }} {{ a['nombre']|lower }}">
+                            <strong>{{ a['orejera'] }}</strong> — {{ a['nombre'] }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            {# Botones de navegacion #}
+            <div class="nav-buttons-grid">
+                <button type="button" class="btn btn-outline-holstein nav-novilla" data-idx="0" id="btn-primera"
+                        {{ 'disabled' if animal_idx == 0 }}>
+                    <i class="bi bi-skip-start-fill"></i><span class="d-none d-sm-inline"> Primera</span>
+                </button>
+                <button type="button" class="btn btn-outline-holstein nav-novilla" data-idx="{{ animal_idx - 1 }}" id="btn-anterior"
+                        {{ 'disabled' if animal_idx == 0 }}>
+                    <i class="bi bi-caret-left-fill"></i><span class="d-none d-sm-inline"> Anterior</span>
+                </button>
+                <button type="button" class="btn btn-outline-holstein nav-novilla" data-idx="{{ animal_idx + 1 }}" id="btn-proxima"
+                        {{ 'disabled' if animal_idx >= total_animales - 1 }}>
+                    <span class="d-none d-sm-inline">Proxima </span><i class="bi bi-caret-right-fill"></i>
+                </button>
+                <button type="button" class="btn btn-outline-holstein nav-novilla" data-idx="{{ total_animales - 1 }}" id="btn-ultima"
+                        {{ 'disabled' if animal_idx >= total_animales - 1 }}>
+                    <span class="d-none d-sm-inline">Ultima </span><i class="bi bi-skip-end-fill"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="current-novilla-idx" value="{{ animal_idx }}">
+<input type="hidden" id="total-novillas" value="{{ total_animales }}">
+<input type="hidden" id="current-tab" value="{{ tab }}">
+<input type="hidden" id="current-novilla-id" value="{{ animal['id'] }}">
+<input type="hidden" id="tabla-origen" value="{{ tabla_origen }}">
+<input type="hidden" id="api-base-url" value="{{ url_for('principal.api_get_novilla', idx=0)|replace('/0', '/') }}">
+<input type="hidden" id="page-base-url" value="{{ url_for('principal.novillas') }}">
+
+{# ===== PESTAÑAS DE NOVEDADES ===== #}
+<div class="card border-secondary">
+    <div class="card-header p-0">
+        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link nav-tab {{ 'active' if tab == 'servicios' }}" data-tab="servicios"
+                   href="{{ url_for('principal.novillas', idx=animal_idx, tab='servicios') }}">
+                    <i class="bi bi-heart-pulse"></i> Servicios
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link nav-tab {{ 'active' if tab == 'partos' }}" data-tab="partos"
+                   href="{{ url_for('principal.novillas', idx=animal_idx, tab='partos') }}">
+                    <i class="bi bi-stars"></i> Partos
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body">
+
+        {# ---- TAB: SERVICIOS ---- #}
+        {% if tab == 'servicios' %}
+        <h6 class="text-muted mb-3">Digite la informacion correspondiente a Servicios</h6>
+
+        {% set puede_servicio = true %}
+        {% set mensaje_error = '' %}
+        {% if animal['fecest'] %}
+            {# Validacion de 1 año se hace en el backend, pero mostramos alerta #}
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('principal.novillas_servicio', animal_id=animal['id']) }}" id="form-servicios-novilla">
+            <input type="hidden" name="idx" value="{{ animal_idx }}">
+            <input type="hidden" name="tabla" value="{{ tabla_origen }}">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Fecha Servicio</label>
+                    <input type="date" class="form-control" name="fecser" value="{{ animal['fecser'] or '' }}" min="{{ fecha_min_servicio }}" max="{{ fecha_max }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Nombre o Codigo del Toro</label>
+                    <input type="text" class="form-control text-uppercase" name="toro" value="{{ animal['toro'] or '' }}" maxlength="15">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Calor</label>
+                    <select class="form-select" name="calor">
+                        <option value="" {{ 'selected' if not animal['calor'] }}>— Sin novedad —</option>
+                        <option value="S" {{ 'selected' if animal['calor'] == 'S' }}>S - Calor perdido</option>
+                    </select>
+                </div>
+            </div>
+            <input type="hidden" id="fecha-nacimiento-novilla" value="{{ animal['fecest'] or '' }}">
+            <div class="mt-3">
+                <button type="submit" class="btn btn-holstein">
+                    {% if animal['fecser'] or animal['toro'] or animal['calor'] %}
+                    <i class="bi bi-arrow-repeat"></i> Actualizar Servicio
+                    {% else %}
+                    <i class="bi bi-floppy"></i> Guardar Servicio
+                    {% endif %}
+                </button>
+                {% if animal['fecser'] or animal['toro'] or animal['calor'] %}
+                <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalBorrarServicioNovilla">
+                    <i class="bi bi-trash"></i> Borrar
+                </button>
+                {% endif %}
+            </div>
+        </form>
+
+        {% if animal['fecser'] or animal['toro'] or animal['calor'] %}
+        <div class="modal fade" id="modalBorrarServicioNovilla" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirmar eliminacion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ¿Esta seguro que desea eliminar los datos del servicio?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <form method="POST" action="{{ url_for('principal.novillas_borrar_servicio', animal_id=animal['id']) }}" style="display:inline;">
+                            <input type="hidden" name="idx" value="{{ animal_idx }}">
+                            <input type="hidden" name="tabla" value="{{ tabla_origen }}">
+                            <button type="submit" class="btn btn-danger">Si, eliminar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ---- TAB: PARTOS ---- #}
+        {% elif tab == 'partos' %}
+        <h6 class="text-muted mb-3">Digite la informacion correspondiente a Partos</h6>
+
+        {% set tiene_servicio = animal['fecser'] or animal['fecultser'] or (animal['numser'] and animal['numser'] > 0) %}
+        {% if not tiene_servicio %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            No se puede registrar parto. La novilla debe tener al menos un servicio reportado.
+            <br>Por favor registre primero un servicio en la pestaña <strong>Servicios</strong>.
+        </div>
+        {% else %}
+        <form method="POST" action="{{ url_for('principal.novillas_parto', animal_id=animal['id']) }}" id="form-partos-novilla">
+            <input type="hidden" name="idx" value="{{ animal_idx }}">
+            <input type="hidden" name="tabla" value="{{ tabla_origen }}">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Fecha Parto</label>
+                    <input type="date" class="form-control" name="fecparto" value="{{ animal['fecparto'] or '' }}" min="{{ fecha_min }}" max="{{ fecha_max }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Tipo Parto</label>
+                    <select class="form-select" name="tipoparto">
+                        <option value="" {{ 'selected' if not animal['tipoparto'] }}>— Seleccione —</option>
+                        <option value="P" {{ 'selected' if animal['tipoparto'] == 'P' }}>P - Parto</option>
+                        <option value="A" {{ 'selected' if animal['tipoparto'] == 'A' }}>A - Aborto</option>
+                        <option value="I" {{ 'selected' if animal['tipoparto'] == 'I' }}>I - Parto inducido</option>
+                    </select>
+                </div>
+            </div>
+
+            <h6 class="mt-4 text-muted">Cria 1</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Destino</label>
+                    <select class="form-select" name="hacer1">
+                        <option value="" {{ 'selected' if not animal['hacer1'] }}>— Seleccione —</option>
+                        <option value="D" {{ 'selected' if animal['hacer1'] == 'D' }}>D - Dejar</option>
+                        <option value="V" {{ 'selected' if animal['hacer1'] == 'V' }}>V - Vender</option>
+                        <option value="M" {{ 'selected' if animal['hacer1'] == 'M' }}>M - Murio</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Orejera Cria</label>
+                    <input type="text" class="form-control text-uppercase" name="orecria1" value="{{ animal['orecria1'] or '' }}" maxlength="9">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Nombre Cria</label>
+                    <input type="text" class="form-control text-uppercase" name="nomcria1" value="{{ animal['nomcria1'] or '' }}" maxlength="10">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Sexo</label>
+                    <select class="form-select" name="sexcria1">
+                        <option value="" {{ 'selected' if not animal['sexcria1'] }}>—</option>
+                        <option value="M" {{ 'selected' if animal['sexcria1'] == 'M' }}>M - Macho</option>
+                        <option value="H" {{ 'selected' if animal['sexcria1'] == 'H' }}>H - Hembra</option>
+                    </select>
+                </div>
+            </div>
+
+            <h6 class="mt-3 text-muted">Cria 2 (si es parto doble)</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Destino</label>
+                    <select class="form-select" name="hacer2">
+                        <option value="" {{ 'selected' if not animal['hacer2'] }}>— Seleccione —</option>
+                        <option value="D" {{ 'selected' if animal['hacer2'] == 'D' }}>D - Dejar</option>
+                        <option value="V" {{ 'selected' if animal['hacer2'] == 'V' }}>V - Vender</option>
+                        <option value="M" {{ 'selected' if animal['hacer2'] == 'M' }}>M - Murio</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Orejera Cria</label>
+                    <input type="text" class="form-control text-uppercase" name="orecria2" value="{{ animal['orecria2'] or '' }}" maxlength="9">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Nombre Cria</label>
+                    <input type="text" class="form-control text-uppercase" name="nomcria2" value="{{ animal['nomcria2'] or '' }}" maxlength="10">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Sexo</label>
+                    <select class="form-select" name="sexcria2">
+                        <option value="" {{ 'selected' if not animal['sexcria2'] }}>—</option>
+                        <option value="M" {{ 'selected' if animal['sexcria2'] == 'M' }}>M - Macho</option>
+                        <option value="H" {{ 'selected' if animal['sexcria2'] == 'H' }}>H - Hembra</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-3 small">
+                <i class="bi bi-info-circle"></i>
+                {% if animal['fecser'] or animal['fecultser'] %}
+                Ultimo servicio reportado: <strong>{{ (animal['fecser'] or animal['fecultser'])|fecha }}</strong>
+                {% if animal['codtor'] or animal['toro'] %} con el toro <strong>{{ animal['codtor'] or animal['toro'] }}</strong>{% endif %}
+                {% else %}
+                Ultimo servicio: <strong>No registrado</strong>
+                {% endif %}
+            </div>
+
+            <div class="mt-3">
+                <button type="submit" class="btn btn-holstein">
+                    {% if animal['fecparto'] or animal['tipoparto'] %}
+                    <i class="bi bi-arrow-repeat"></i> Actualizar Parto
+                    {% else %}
+                    <i class="bi bi-floppy"></i> Guardar Parto
+                    {% endif %}
+                </button>
+                {% if animal['fecparto'] or animal['tipoparto'] %}
+                <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalBorrarPartoNovilla">
+                    <i class="bi bi-trash"></i> Borrar
+                </button>
+                {% endif %}
+            </div>
+        </form>
+
+        {% if animal['fecparto'] or animal['tipoparto'] %}
+        <div class="modal fade" id="modalBorrarPartoNovilla" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirmar eliminacion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ¿Esta seguro que desea eliminar los datos del parto y las crias?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <form method="POST" action="{{ url_for('principal.novillas_borrar_parto', animal_id=animal['id']) }}" style="display:inline;">
+                            <input type="hidden" name="idx" value="{{ animal_idx }}">
+                            <input type="hidden" name="tabla" value="{{ tabla_origen }}">
+                            <button type="submit" class="btn btn-danger">Si, eliminar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        {% endif %}
+
+    </div>
+</div>
+
+{% else %}
+<div class="alert alert-info text-center">No hay novillas en la tabla.</div>
+{% endif %}
+
+<script>
+// Novilla search filter
+document.getElementById('buscar-novilla')?.addEventListener('input', function() {
+    const query = this.value.toLowerCase();
+    document.querySelectorAll('.novilla-item').forEach(function(item) {
+        const text = item.getAttribute('data-search');
+        item.style.display = text.includes(query) ? '' : 'none';
+    });
+});
+
+// Servicios: Calor perdido bloquea campo toro
+(function() {
+    var form = document.getElementById('form-servicios-novilla');
+    if (!form) return;
+
+    var selectCalor = form.querySelector('[name="calor"]');
+    var inputToro = form.querySelector('[name="toro"]');
+
+    function actualizarCampoToro() {
+        if (selectCalor.value === 'S') {
+            inputToro.value = 'CALOR PER';
+            inputToro.readOnly = true;
+            inputToro.classList.add('bg-light');
+        } else {
+            if (inputToro.value === 'CALOR PER') {
+                inputToro.value = '';
+            }
+            inputToro.readOnly = false;
+            inputToro.classList.remove('bg-light');
+        }
+    }
+
+    actualizarCampoToro();
+    selectCalor.addEventListener('change', actualizarCampoToro);
+})();
+
+// Validacion formulario de servicios novilla
+(function() {
+    var form = document.getElementById('form-servicios-novilla');
+    if (!form) return;
+
+    var fechaNacimiento = document.getElementById('fecha-nacimiento-novilla')?.value;
+
+    form.addEventListener('submit', function(e) {
+        var fecser = form.querySelector('[name="fecser"]').value;
+        var toro = form.querySelector('[name="toro"]').value.trim();
+        var calor = form.querySelector('[name="calor"]').value;
+
+        var errores = [];
+
+        if (!fecser) {
+            errores.push('La <strong>Fecha de Servicio</strong> es obligatoria.');
+        }
+
+        if (!toro && !calor) {
+            errores.push('Debe ingresar el <strong>Nombre o Codigo del Toro</strong> o seleccionar <strong>Calor perdido</strong>.');
+        }
+
+        // Validar que la novilla tenga al menos 1 año de edad
+        if (fecser && fechaNacimiento) {
+            var dNac = new Date(fechaNacimiento);
+            var dSer = new Date(fecser);
+            var diffDias = Math.floor((dSer - dNac) / (1000 * 60 * 60 * 24));
+            if (diffDias < 365) {
+                errores.push('La novilla debe tener al menos <strong>1 año de edad</strong> para registrar servicio. Fecha de nacimiento: <strong>' + fechaNacimiento + '</strong>. Dias de edad al servicio: <strong>' + diffDias + '</strong>.');
+            }
+        }
+
+        var alertaExistente = document.getElementById('alerta-validacion-servicios-novilla');
+        if (alertaExistente) alertaExistente.remove();
+
+        if (errores.length > 0) {
+            e.preventDefault();
+            var alerta = document.createElement('div');
+            alerta.id = 'alerta-validacion-servicios-novilla';
+            alerta.className = 'alert alert-danger mt-3';
+            alerta.innerHTML = '<i class="bi bi-x-circle"></i> <strong>Errores de validacion:</strong><ul class="mb-0 mt-2">' +
+                errores.map(function(err) { return '<li>' + err + '</li>'; }).join('') + '</ul>';
+            form.querySelector('button[type="submit"]').before(alerta);
+        }
+    });
+})();
+
+// Validacion formulario de partos novilla
+(function() {
+    var form = document.getElementById('form-partos-novilla');
+    if (!form) return;
+
+    form.addEventListener('submit', function(e) {
+        var fecparto = form.querySelector('[name="fecparto"]').value;
+        var tipoparto = form.querySelector('[name="tipoparto"]').value;
+
+        var errores = [];
+
+        if (!fecparto) {
+            errores.push('La <strong>Fecha de Parto</strong> es obligatoria.');
+        }
+
+        if (!tipoparto) {
+            errores.push('El <strong>Tipo de Parto</strong> es obligatorio.');
+        }
+
+        var alertaExistente = document.getElementById('alerta-validacion-partos-novilla');
+        if (alertaExistente) alertaExistente.remove();
+
+        if (errores.length > 0) {
+            e.preventDefault();
+            var alerta = document.createElement('div');
+            alerta.id = 'alerta-validacion-partos-novilla';
+            alerta.className = 'alert alert-danger mt-3';
+            alerta.innerHTML = '<i class="bi bi-x-circle"></i> <strong>Errores de validacion:</strong><ul class="mb-0 mt-2">' +
+                errores.map(function(err) { return '<li>' + err + '</li>'; }).join('') + '</ul>';
+            form.querySelector('button[type="submit"]').before(alerta);
+        }
+    });
+})();
+
+// ========== NAVEGACION AJAX NOVILLAS ==========
+(function() {
+    var currentIdx = parseInt(document.getElementById('current-novilla-idx')?.value || 0);
+    var totalNovillas = parseInt(document.getElementById('total-novillas')?.value || 0);
+    var currentTab = document.getElementById('current-tab')?.value || 'servicios';
+    var pageBaseUrl = document.getElementById('page-base-url')?.value || '/principal/novillas';
+    var isLoading = false;
+
+    // Reinicializar scripts del formulario despues de actualizar el DOM
+    function reinitFormScripts() {
+        // Re-vincular filtro de busqueda
+        var buscarInput = document.getElementById('buscar-novilla');
+        if (buscarInput) {
+            buscarInput.addEventListener('input', function() {
+                var query = this.value.toLowerCase();
+                document.querySelectorAll('.novilla-item').forEach(function(item) {
+                    var text = item.getAttribute('data-search');
+                    item.style.display = text.includes(query) ? '' : 'none';
+                });
+            });
+        }
+
+        // Re-vincular botones de navegacion
+        document.querySelectorAll('.nav-novilla').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var idx = parseInt(this.dataset.idx);
+                if (!isNaN(idx)) {
+                    loadNovilla(idx);
+                    var dropdown = this.closest('.dropdown-menu');
+                    if (dropdown) {
+                        var bsDropdown = bootstrap.Dropdown.getInstance(dropdown.previousElementSibling);
+                        if (bsDropdown) bsDropdown.hide();
+                    }
+                }
+            });
+        });
+
+        // Re-vincular logica de calor perdido en servicios
+        var formServicios = document.getElementById('form-servicios-novilla');
+        if (formServicios) {
+            var selectCalor = formServicios.querySelector('[name="calor"]');
+            var inputToro = formServicios.querySelector('[name="toro"]');
+            if (selectCalor && inputToro) {
+                function actualizarCampoToro() {
+                    if (selectCalor.value === 'S') {
+                        inputToro.value = 'CALOR PER';
+                        inputToro.readOnly = true;
+                        inputToro.classList.add('bg-light');
+                    } else {
+                        if (inputToro.value === 'CALOR PER') inputToro.value = '';
+                        inputToro.readOnly = false;
+                        inputToro.classList.remove('bg-light');
+                    }
+                }
+                actualizarCampoToro();
+                selectCalor.addEventListener('change', actualizarCampoToro);
+            }
+        }
+
+        // Re-vincular botones de parto sin servicio
+        var btnPartoSi = document.getElementById('btn-parto-si');
+        if (btnPartoSi) {
+            btnPartoSi.addEventListener('click', function() {
+                document.getElementById('alerta-sin-servicio').style.display = 'none';
+                document.getElementById('form-partos-novilla').style.display = '';
+            });
+        }
+        var btnPartoNo = document.getElementById('btn-parto-no');
+        if (btnPartoNo) {
+            btnPartoNo.addEventListener('click', function() {
+                document.getElementById('alerta-sin-servicio').innerHTML =
+                    '<i class="bi bi-info-circle"></i> No se registrara el parto.';
+                document.getElementById('alerta-sin-servicio').className = 'alert alert-info';
+            });
+        }
+
+        // Reinicializar validaciones
+        if (typeof initValidacionServiciosNovilla === 'function') initValidacionServiciosNovilla();
+        if (typeof initValidacionPartosNovilla === 'function') initValidacionPartosNovilla();
+    }
+
+    // Vincular eventos a los tabs
+    function reinitTabListeners() {
+        document.querySelectorAll('.nav-tab').forEach(function(tab) {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                var tabName = this.dataset.tab;
+                if (tabName) loadTab(tabName);
+            });
+        });
+    }
+
+    function loadNovilla(idx) {
+        if (isLoading || idx < 0 || idx >= totalNovillas) return;
+        isLoading = true;
+
+        var url = pageBaseUrl + '?idx=' + idx + '&tab=' + currentTab;
+
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(response) {
+            if (!response.ok) throw new Error('Error de red');
+            return response.text();
+        })
+        .then(function(html) {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+
+            // Extraer y reemplazar el card de la novilla
+            var newCardNovilla = doc.getElementById('card-novilla');
+            var oldCardNovilla = document.getElementById('card-novilla');
+            if (newCardNovilla && oldCardNovilla) {
+                oldCardNovilla.outerHTML = newCardNovilla.outerHTML;
+            }
+
+            // Extraer y reemplazar el card de tabs
+            var newCardTabs = doc.querySelector('.card.border-secondary');
+            var oldCardTabs = document.querySelector('.card.border-secondary');
+            if (newCardTabs && oldCardTabs) {
+                oldCardTabs.outerHTML = newCardTabs.outerHTML;
+            }
+
+            // Actualizar campos hidden
+            var newIdx = doc.getElementById('current-novilla-idx');
+            var newNovillaId = doc.getElementById('current-novilla-id');
+            var newTablaOrigen = doc.getElementById('tabla-origen');
+            var newFecNac = doc.getElementById('fecha-nacimiento-novilla');
+            if (newIdx) {
+                document.getElementById('current-novilla-idx').value = newIdx.value;
+                currentIdx = parseInt(newIdx.value);
+            }
+            if (newNovillaId) {
+                document.getElementById('current-novilla-id').value = newNovillaId.value;
+            }
+            if (newTablaOrigen) {
+                document.getElementById('tabla-origen').value = newTablaOrigen.value;
+            }
+            if (newFecNac) {
+                document.getElementById('fecha-nacimiento-novilla').value = newFecNac.value;
+            }
+
+            // Actualizar URL sin recargar
+            history.pushState({ idx: currentIdx, tab: currentTab }, '', url);
+
+            // Reinicializar scripts
+            reinitFormScripts();
+            reinitTabListeners();
+
+            isLoading = false;
+        })
+        .catch(function(error) {
+            console.error('Error cargando novilla:', error);
+            window.location.href = url;
+        });
+    }
+
+    // Funcion para cargar tab via AJAX
+    function loadTab(tabName) {
+        if (isLoading || tabName === currentTab) return;
+        isLoading = true;
+
+        var url = pageBaseUrl + '?idx=' + currentIdx + '&tab=' + tabName;
+
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(response) {
+            if (!response.ok) throw new Error('Error de red');
+            return response.text();
+        })
+        .then(function(html) {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+
+            var newCardTabs = doc.querySelector('.card.border-secondary');
+            var oldCardTabs = document.querySelector('.card.border-secondary');
+            if (newCardTabs && oldCardTabs) {
+                oldCardTabs.outerHTML = newCardTabs.outerHTML;
+            }
+
+            currentTab = tabName;
+            document.getElementById('current-tab').value = tabName;
+
+            history.pushState({ idx: currentIdx, tab: currentTab }, '', url);
+
+            reinitFormScripts();
+            reinitTabListeners();
+
+            isLoading = false;
+        })
+        .catch(function(error) {
+            console.error('Error cargando tab:', error);
+            window.location.href = url;
+        });
+    }
+
+    // Event listeners iniciales
+    document.querySelectorAll('.nav-novilla').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var idx = parseInt(this.dataset.idx);
+            if (!isNaN(idx)) {
+                loadNovilla(idx);
+                var dropdown = this.closest('.dropdown-menu');
+                if (dropdown) {
+                    var bsDropdown = bootstrap.Dropdown.getInstance(dropdown.previousElementSibling);
+                    if (bsDropdown) bsDropdown.hide();
+                }
+            }
+        });
+    });
+
+    // Teclas de navegacion
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+        if (e.key === 'ArrowLeft' || e.key === 'a') {
+            loadNovilla(currentIdx - 1);
+        } else if (e.key === 'ArrowRight' || e.key === 'd') {
+            loadNovilla(currentIdx + 1);
+        }
+    });
+
+    // Boton atras navegador
+    window.addEventListener('popstate', function(e) {
+        if (e.state && typeof e.state.idx !== 'undefined') {
+            currentIdx = e.state.idx;
+            currentTab = e.state.tab || currentTab;
+            loadNovilla(e.state.idx);
+        }
+    });
+
+    // Guardar estado inicial
+    history.replaceState({ idx: currentIdx, tab: currentTab }, '', window.location.href);
+
+    // Inicializar listeners de tabs
+    reinitTabListeners();
+})();
+</script>
+{% endblock %}

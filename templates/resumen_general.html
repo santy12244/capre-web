@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+
+{% block title %}Resumen General - {{ hato['nombre'] if hato else 'CAPRE' }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header bg-holstein text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-check"></i> Resumen General de Novedades - {{ hato['nombre'] if hato else '' }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Resumen de todas las novedades digitadas en esta sesion de trabajo.
+                </p>
+
+                <!-- Resumen de conteos -->
+                <div class="d-flex flex-wrap justify-content-between gap-2 mb-4">
+                    <div class="card text-center bg-light flex-fill" style="min-width: 90px;">
+                        <div class="card-body py-2 px-1">
+                            <h5 class="mb-0 text-holstein">{{ servicios|length }}</h5>
+                            <small>Servicios</small>
+                        </div>
+                    </div>
+                    <div class="card text-center bg-light flex-fill" style="min-width: 90px;">
+                        <div class="card-body py-2 px-1">
+                            <h5 class="mb-0 text-warning">{{ secas|length }}</h5>
+                            <small>Secas</small>
+                        </div>
+                    </div>
+                    <div class="card text-center bg-light flex-fill" style="min-width: 90px;">
+                        <div class="card-body py-2 px-1">
+                            <h5 class="mb-0 text-info">{{ chequeos|length }}</h5>
+                            <small>Chequeos</small>
+                        </div>
+                    </div>
+                    <div class="card text-center bg-light flex-fill" style="min-width: 90px;">
+                        <div class="card-body py-2 px-1">
+                            <h5 class="mb-0 text-success">{{ partos|length }}</h5>
+                            <small>Partos</small>
+                        </div>
+                    </div>
+                    <div class="card text-center bg-light flex-fill" style="min-width: 90px;">
+                        <div class="card-body py-2 px-1">
+                            <h5 class="mb-0 text-danger">{{ salidas|length }}</h5>
+                            <small>Salidas</small>
+                        </div>
+                    </div>
+                    <div class="card text-center bg-light flex-fill" style="min-width: 90px;">
+                        <div class="card-body py-2 px-1">
+                            <h5 class="mb-0 text-secondary">{{ ordenos|length }}</h5>
+                            <small>Ordeños</small>
+                        </div>
+                    </div>
+                    <div class="card text-center bg-light flex-fill" style="min-width: 90px;">
+                        <div class="card-body py-2 px-1">
+                            <h5 class="mb-0" style="color: #6f42c1;">{{ sanitarios|length }}</h5>
+                            <small>Sanitarios</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acordeon con detalles -->
+                <div class="accordion" id="resumenAccordion">
+
+                    <!-- Servicios -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseServicios">
+                                <i class="bi bi-heart text-holstein me-2"></i> Servicios ({{ servicios|length }})
+                            </button>
+                        </h2>
+                        <div id="collapseServicios" class="accordion-collapse collapse" data-bs-parent="#resumenAccordion">
+                            <div class="accordion-body p-0">
+                                {% if servicios %}
+                                <table class="table table-sm table-striped mb-0">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Orejera</th>
+                                            <th>Nombre</th>
+                                            <th>Fecha</th>
+                                            <th>Toro</th>
+                                            <th>Calor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for s in servicios %}
+                                        <tr>
+                                            <td>{{ s['orejera'] or '' }}</td>
+                                            <td>{{ s['nombre'] or '' }}</td>
+                                            <td>{{ s['fecser']|fecha }}</td>
+                                            <td>{{ s['toro'] or '' }}</td>
+                                            <td>{{ 'Si' if s['calor'] == 'S' else '' }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% else %}
+                                <p class="text-muted p-3 mb-0">No hay servicios registrados.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Secas -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSecas">
+                                <i class="bi bi-pause-circle text-warning me-2"></i> Secas ({{ secas|length }})
+                            </button>
+                        </h2>
+                        <div id="collapseSecas" class="accordion-collapse collapse" data-bs-parent="#resumenAccordion">
+                            <div class="accordion-body p-0">
+                                {% if secas %}
+                                <table class="table table-sm table-striped mb-0">
+                                    <thead class="table-warning">
+                                        <tr>
+                                            <th>Orejera</th>
+                                            <th>Nombre</th>
+                                            <th>Fecha Seca</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for s in secas %}
+                                        <tr>
+                                            <td>{{ s['orejera'] or '' }}</td>
+                                            <td>{{ s['nombre'] or '' }}</td>
+                                            <td>{{ s['fecseca']|fecha }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% else %}
+                                <p class="text-muted p-3 mb-0">No hay secas registradas.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chequeos de Preñez -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseChequeos">
+                                <i class="bi bi-search text-info me-2"></i> Chequeos de Preñez ({{ chequeos|length }})
+                            </button>
+                        </h2>
+                        <div id="collapseChequeos" class="accordion-collapse collapse" data-bs-parent="#resumenAccordion">
+                            <div class="accordion-body p-0">
+                                {% if chequeos %}
+                                <table class="table table-sm table-striped mb-0">
+                                    <thead class="table-info">
+                                        <tr>
+                                            <th>Orejera</th>
+                                            <th>Nombre</th>
+                                            <th>Fecha Chequeo</th>
+                                            <th>Resultado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for c in chequeos %}
+                                        <tr>
+                                            <td>{{ c['orejera'] or '' }}</td>
+                                            <td>{{ c['nombre'] or '' }}</td>
+                                            <td>{{ c['fecchp']|fecha }}</td>
+                                            <td>
+                                                {% if c['panew'] == 'P' %}
+                                                <span class="badge bg-holstein">Preñada</span>
+                                                {% elif c['panew'] == 'A' %}
+                                                <span class="badge bg-danger">Abierta</span>
+                                                {% else %}
+                                                {{ c['panew'] or '' }}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% else %}
+                                <p class="text-muted p-3 mb-0">No hay chequeos registrados.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Partos -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePartos">
+                                <i class="bi bi-gift text-success me-2"></i> Partos ({{ partos|length }})
+                            </button>
+                        </h2>
+                        <div id="collapsePartos" class="accordion-collapse collapse" data-bs-parent="#resumenAccordion">
+                            <div class="accordion-body p-0">
+                                {% if partos %}
+                                <table class="table table-sm table-striped mb-0">
+                                    <thead class="table-holstein">
+                                        <tr>
+                                            <th>Orejera</th>
+                                            <th>Nombre</th>
+                                            <th>Fecha</th>
+                                            <th>Tipo</th>
+                                            <th>Cria 1</th>
+                                            <th>Cria 2</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for p in partos %}
+                                        <tr>
+                                            <td>{{ p['orejera'] or '' }}</td>
+                                            <td>{{ p['nombre'] or '' }}</td>
+                                            <td>{{ p['fecparto']|fecha }}</td>
+                                            <td>
+                                                {% if p['tipoparto'] == 'P' %}Parto
+                                                {% elif p['tipoparto'] == 'A' %}Aborto
+                                                {% elif p['tipoparto'] == 'I' %}Inducido
+                                                {% else %}{{ p['tipoparto'] or '' }}{% endif %}
+                                            </td>
+                                            <td>
+                                                {% if p['nomcria1'] %}
+                                                {{ p['nomcria1'] }} ({{ p['sexcria1'] or '' }})
+                                                {% elif p['orecria1'] %}
+                                                {{ p['orecria1'] }} ({{ p['sexcria1'] or '' }})
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if p['nomcria2'] %}
+                                                {{ p['nomcria2'] }} ({{ p['sexcria2'] or '' }})
+                                                {% elif p['orecria2'] %}
+                                                {{ p['orecria2'] }} ({{ p['sexcria2'] or '' }})
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% else %}
+                                <p class="text-muted p-3 mb-0">No hay partos registrados.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Salidas -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSalidas">
+                                <i class="bi bi-box-arrow-right text-danger me-2"></i> Salidas ({{ salidas|length }})
+                            </button>
+                        </h2>
+                        <div id="collapseSalidas" class="accordion-collapse collapse" data-bs-parent="#resumenAccordion">
+                            <div class="accordion-body p-0">
+                                {% if salidas %}
+                                <table class="table table-sm table-striped mb-0">
+                                    <thead class="table-danger">
+                                        <tr>
+                                            <th>Orejera</th>
+                                            <th>Nombre</th>
+                                            <th>Fecha</th>
+                                            <th>Motivo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for s in salidas %}
+                                        <tr>
+                                            <td>{{ s['orejera'] or '' }}</td>
+                                            <td>{{ s['nombre'] or '' }}</td>
+                                            <td>{{ s['fecsale']|fecha }}</td>
+                                            <td>
+                                                {% if s['motsale'] == '7' %}Venta Leche
+                                                {% elif s['motsale'] == '8' %}Venta Carne
+                                                {% elif s['motsale'] == '9' %}Murio
+                                                {% else %}{{ s['motsale'] or '' }}{% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% else %}
+                                <p class="text-muted p-3 mb-0">No hay salidas registradas.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ordeños -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOrdeños">
+                                <i class="bi bi-droplet text-secondary me-2"></i> Ordeños ({{ ordenos|length }})
+                            </button>
+                        </h2>
+                        <div id="collapseOrdeños" class="accordion-collapse collapse" data-bs-parent="#resumenAccordion">
+                            <div class="accordion-body p-0">
+                                {% if ordenos %}
+                                <table class="table table-sm table-striped mb-0">
+                                    <thead class="table-secondary">
+                                        <tr>
+                                            <th>Orejera</th>
+                                            <th>Nombre</th>
+                                            <th>Ord 1</th>
+                                            <th>Ord 2</th>
+                                            <th>Ord 3</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% set ns = namespace(total_general=0) %}
+                                        {% for o in ordenos %}
+                                        {% set total = (o['ord1'] or 0) + (o['ord2'] or 0) + (o['ord3'] or 0) %}
+                                        {% set ns.total_general = ns.total_general + total %}
+                                        <tr>
+                                            <td>{{ o['orejera'] or '' }}</td>
+                                            <td>{{ o['nombre'] or '' }}</td>
+                                            <td>{{ '%.1f'|format(o['ord1']) if o['ord1'] else '' }}</td>
+                                            <td>{{ '%.1f'|format(o['ord2']) if o['ord2'] else '' }}</td>
+                                            <td>{{ '%.1f'|format(o['ord3']) if o['ord3'] else '' }}</td>
+                                            <td class="fw-bold">{{ '%.1f'|format(total) }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot class="table-warning">
+                                        <tr>
+                                            <th colspan="5" class="text-end">TOTAL LECHE:</th>
+                                            <th>{{ '%.1f'|format(ns.total_general) }} Kg</th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                                {% else %}
+                                <p class="text-muted p-3 mb-0">No hay ordenos registrados.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sanitarios -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSanitarios">
+                                <i class="bi bi-heart-pulse-fill me-2" style="color: #6f42c1;"></i> Registro Sanitario ({{ sanitarios|length }})
+                            </button>
+                        </h2>
+                        <div id="collapseSanitarios" class="accordion-collapse collapse" data-bs-parent="#resumenAccordion">
+                            <div class="accordion-body p-0">
+                                {% if sanitarios %}
+                                <table class="table table-sm table-striped mb-0">
+                                    <thead style="background-color: #e2d5f1;">
+                                        <tr>
+                                            <th>Orejera</th>
+                                            <th>Nombre</th>
+                                            <th>Novedad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for s in sanitarios %}
+                                        <tr>
+                                            <td>{{ s['orejera'] or '' }}</td>
+                                            <td>{{ s['nombre'] or '' }}</td>
+                                            <td>
+                                                {% if s['cart'] == 'S' %}Enferma
+                                                {% elif s['cart'] == 'M' %}Mastitis aguda
+                                                {% elif s['cart'] == 'U' %}Lesion de ubre
+                                                {% elif s['cart'] == 'T' %}Perdida muestra de leche
+                                                {% elif s['cart'] == 'L' %}Perdida peso de leche
+                                                {% else %}{{ s['cart'] or '' }}{% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% else %}
+                                <p class="text-muted p-3 mb-0">No hay registros sanitarios.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="mt-4">
+                    <a href="{{ url_for('principal.index') }}" class="btn btn-holstein">
+                        <i class="bi bi-arrow-left"></i> Volver a Captura
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

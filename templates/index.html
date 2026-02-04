@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}CAPRE - Inicio{% endblock %}
+
+{% block content %}
+<!-- Hero Section con imagen de vaca -->
+<div class="hero-section">
+    <div class="hero-image" style="background-image: url('{{ url_for('static', filename='img/vaca_hero.jpg') }}');"></div>
+    <div class="hero-content">
+        <h1>Sistema de Gestion CAPRE - WEB</h1>
+        <p>Control y registro de producción  y reproducción de su Hato</p>
+        <a href="{{ url_for('upload.upload_form') }}" class="btn btn-light btn-lg">
+            <i class="bi bi-upload"></i> Importar Archivos Capre .dbf
+        </a>
+    </div>
+</div>
+
+<!-- Tabla de sesiones -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0 text-holstein"><i class="bi bi-journal-text"></i> Sesiones de Trabajo</h5>
+    <small class="text-muted"><i class="bi bi-phone"></i> Dispositivo: <code>{{ device_id }}</code></small>
+</div>
+
+{% if sessions %}
+<!-- Vista de tabla para desktop -->
+<div class="table-responsive d-none d-md-block">
+    <table class="table table-hover table-bordered table-holstein">
+        <thead>
+            <tr>
+                <th>Finca</th>
+                <th>Codigo</th>
+                <th>Fecha Creacion</th>
+                <th>Fecha Ult. Prueba</th>
+                <th>Fecha Prueba Actual</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in sessions %}
+            <tr class="{{ 'table-active' if s.session_id == active_session }}">
+                <td class="fw-bold">{{ s.farm_name }}</td>
+                <td><code>{{ s.prefix_code }}</code></td>
+                <td>{{ s.created_at[:10]|fecha }}</td>
+                <td>{{ s.fecultprb|fecha if s.fecultprb else '—' }}</td>
+                <td>
+                    {% if s.fecprbact %}
+                    {{ s.fecprbact|fecha }}
+                    {% else %}
+                    <span class="text-warning"><i class="bi bi-exclamation-triangle"></i> Pendiente</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if s.session_id == active_session %}
+                    <span class="badge badge-activa">Activa</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Inactiva</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if s.session_id != active_session %}
+                    <a href="{{ url_for('main.select_session', session_id=s.session_id) }}"
+                       class="btn btn-sm btn-outline-holstein" title="Activar">
+                        <i class="bi bi-play-fill"></i> Activar
+                    </a>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('main.remove_session', session_id=s.session_id) }}"
+                          class="d-inline"
+                          onsubmit="return confirm('Eliminar esta sesion? Se perderan todos los datos.')">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Vista de cards para movil -->
+<div class="d-md-none">
+    {% for s in sessions %}
+    <div class="card mb-2 {{ 'border-success' if s.session_id == active_session else '' }}">
+        <div class="card-body py-2 px-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="mb-1 fw-bold">{{ s.farm_name }}</h6>
+                    <small class="text-muted"><code>{{ s.prefix_code }}</code></small>
+                </div>
+                {% if s.session_id == active_session %}
+                <span class="badge badge-activa">Activa</span>
+                {% else %}
+                <span class="badge bg-secondary">Inactiva</span>
+                {% endif %}
+            </div>
+            <div class="mt-2 pt-2 border-top">
+                <div class="d-flex justify-content-between small text-muted mb-1">
+                    <span>Ult. Prueba: {{ s.fecultprb|fecha if s.fecultprb else '—' }}</span>
+                    <span>Actual: {% if s.fecprbact %}{{ s.fecprbact|fecha }}{% else %}<span class="text-warning">Pendiente</span>{% endif %}</span>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <div class="btn-group btn-group-sm">
+                        {% if s.session_id != active_session %}
+                        <a href="{{ url_for('main.select_session', session_id=s.session_id) }}"
+                           class="btn btn-outline-holstein" title="Activar">
+                            <i class="bi bi-play-fill"></i>
+                        </a>
+                        {% endif %}
+                        <form method="POST" action="{{ url_for('main.remove_session', session_id=s.session_id) }}"
+                              class="d-inline"
+                              onsubmit="return confirm('Eliminar esta sesion?')">
+                            <button type="submit" class="btn btn-outline-danger" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="bi bi-inbox"></i>
+    <p class="lead mt-3">No hay sesiones de trabajo.</p>
+    <p>Importe archivos .dbf para comenzar a trabajar.</p>
+</div>
+{% endif %}
+
+<div class="footer-minimal">
+    Holstein Colombia - CAPRE
+</div>
+{% endblock %}

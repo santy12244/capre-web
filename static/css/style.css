@@ -1,0 +1,857 @@
+/* ===========================================
+   CAPRE - Holstein Colombia
+   Paleta: Negro Elegante + Rojo Corporativo (acento)
+   =========================================== */
+
+:root {
+    --holstein-dark: #212529;
+    --holstein-dark-hover: #1a1a1a;
+    --holstein-gray: #495057;
+    --holstein-gray-light: #6c757d;
+    --holstein-light: #f8f9fa;
+    --holstein-white: #ffffff;
+    --holstein-accent: #495057;
+    --holstein-border: #dee2e6;
+    /* Rojo corporativo Holstein - usado como acento minimalista */
+    --holstein-red: #C41E3A;
+    --holstein-red-dark: #9E1830;
+}
+
+body {
+    background-color: var(--holstein-light);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Navbar blanco con contraste */
+.navbar-holstein {
+    background-color: var(--holstein-white) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid var(--holstein-border);
+}
+
+.navbar-holstein .navbar-brand {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.navbar-holstein .navbar-brand img {
+    height: 40px;
+    margin-right: 8px;
+}
+
+.navbar-holstein .nav-link {
+    color: var(--holstein-gray) !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+    border-radius: 6px;
+    margin: 0 2px;
+}
+
+.navbar-holstein .nav-link:hover {
+    color: var(--holstein-dark) !important;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.navbar-holstein .nav-link.active {
+    color: var(--holstein-dark) !important;
+    background-color: rgba(0, 0, 0, 0.08);
+    font-weight: 600;
+    border-bottom: 2px solid var(--holstein-red);
+}
+
+.navbar-holstein .navbar-text {
+    color: var(--holstein-gray-light) !important;
+}
+
+/* Cards minimalistas */
+.card {
+    border: 1px solid var(--holstein-border);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Botones corporativos */
+.btn-holstein {
+    background-color: var(--holstein-dark);
+    border-color: var(--holstein-dark);
+    color: var(--holstein-white);
+}
+
+.btn-holstein:hover,
+.btn-holstein:focus {
+    background-color: var(--holstein-dark-hover);
+    border-color: var(--holstein-dark-hover);
+    color: var(--holstein-white);
+}
+
+.btn-outline-holstein {
+    color: var(--holstein-dark);
+    border-color: var(--holstein-dark);
+    background-color: transparent;
+}
+
+.btn-outline-holstein:hover,
+.btn-outline-holstein:focus {
+    background-color: var(--holstein-dark);
+    border-color: var(--holstein-red);
+    color: var(--holstein-white);
+}
+
+/* Tablas institucionales */
+.table-holstein thead {
+    background-color: var(--holstein-dark);
+    color: var(--holstein-white);
+}
+
+.table-holstein thead th {
+    border-color: var(--holstein-dark-hover);
+    font-weight: 600;
+}
+
+.table-holstein tbody tr:hover {
+    background-color: rgba(33, 37, 41, 0.04);
+}
+
+.table-holstein .table-active {
+    background-color: rgba(33, 37, 41, 0.08) !important;
+    border-left: 3px solid var(--holstein-red);
+}
+
+/* Badges */
+.badge-holstein {
+    background-color: var(--holstein-dark);
+    color: var(--holstein-white);
+}
+
+/* Badge de sesion activa con acento rojo */
+.badge-activa {
+    background-color: var(--holstein-dark);
+    color: var(--holstein-white);
+    position: relative;
+    padding-left: 1.2em;
+}
+
+.badge-activa::before {
+    content: '';
+    position: absolute;
+    left: 0.5em;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background-color: var(--holstein-red);
+    border-radius: 50%;
+}
+
+/* Hero section para página de inicio */
+.hero-section {
+    position: relative;
+    background: linear-gradient(135deg, var(--holstein-dark) 0%, #2c3136 100%);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.hero-content {
+    position: relative;
+    padding: 3rem 2rem;
+    color: var(--holstein-white);
+    z-index: 1;
+}
+
+.hero-content h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.hero-content p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 1.5rem;
+}
+
+.hero-image {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 45%;
+    background-size: cover;
+    background-position: center left;
+    opacity: 0.3;
+    mask-image: linear-gradient(to right, transparent, black 30%);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 30%);
+}
+
+/* Secciones de contenido */
+.bg-holstein {
+    background-color: var(--holstein-dark) !important;
+    color: var(--holstein-white);
+}
+
+.border-holstein {
+    border-color: var(--holstein-dark) !important;
+}
+
+.text-holstein {
+    color: var(--holstein-dark) !important;
+}
+
+.text-holstein-red {
+    color: var(--holstein-red) !important;
+}
+
+/* Formularios */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--holstein-dark);
+    box-shadow: 0 0 0 0.2rem rgba(196, 30, 58, 0.15);
+}
+
+/* Forzar mayusculas en campos de texto */
+input[type="text"].form-control {
+    text-transform: uppercase;
+}
+
+/* Links */
+a {
+    color: var(--holstein-gray);
+}
+
+a:hover {
+    color: var(--holstein-red);
+}
+
+/* Estado vacío */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: var(--holstein-gray-light);
+    opacity: 0.5;
+}
+
+.empty-state p {
+    color: var(--holstein-gray-light);
+}
+
+/* Footer sutil */
+.footer-minimal {
+    text-align: center;
+    padding: 1.5rem;
+    color: var(--holstein-gray-light);
+    font-size: 0.875rem;
+    margin-top: 3rem;
+    border-top: 1px solid var(--holstein-border);
+}
+
+/* Seccion animal - unificado con el tema */
+.card-animal {
+    border-color: var(--holstein-dark);
+}
+
+.card-animal .card-header {
+    background-color: var(--holstein-dark);
+    color: var(--holstein-white);
+}
+
+/* Tipografia mejorada para info animal */
+.fs-3 {
+    line-height: 1.2;
+}
+
+.fw-medium {
+    font-weight: 500;
+}
+
+.fw-semibold {
+    font-weight: 600;
+}
+
+/* Datos del animal */
+.bg-light.rounded {
+    background-color: #f8f9fa !important;
+    padding: 1rem;
+}
+
+/* ===========================================
+   NAVEGACION ANIMAL GRID
+   =========================================== */
+.nav-animal-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.nav-search-dropdown {
+    width: 100%;
+    max-width: 300px;
+}
+
+.nav-buttons-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.nav-buttons-grid .btn {
+    flex: 0 0 auto;
+}
+
+@media (max-width: 575.98px) {
+    .nav-buttons-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .nav-buttons-grid .btn {
+        width: 100%;
+    }
+}
+
+/* Tabla de ordenos responsive */
+.table-ordenos .ordeno-input {
+    text-align: center;
+    padding: 0.25rem 0.35rem;
+}
+
+@media (max-width: 575.98px) {
+    .table-ordenos .ordeno-input {
+        font-size: 16px !important;
+        min-height: 40px;
+        padding: 0.35rem 0.25rem;
+    }
+}
+
+/* ===========================================
+   RESPONSIVE & PWA STYLES
+   =========================================== */
+
+/* Indicador offline */
+.offline-indicator {
+    position: fixed;
+    bottom: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #dc3545;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    z-index: 9999;
+    transition: bottom 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.offline-indicator.show {
+    bottom: 20px;
+}
+
+/* Safe area para dispositivos con notch */
+@supports (padding: max(0px)) {
+    .navbar {
+        padding-top: max(0.5rem, env(safe-area-inset-top));
+    }
+    .container {
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+    }
+}
+
+/* ===========================================
+   TABLET (576px - 991px)
+   =========================================== */
+@media (min-width: 576px) and (max-width: 991.98px) {
+    .hero-content {
+        padding: 2.5rem 2rem;
+    }
+
+    .hero-content h1 {
+        font-size: 1.75rem;
+    }
+
+    .hero-image {
+        width: 40%;
+        opacity: 0.25;
+    }
+
+    /* Ajustar cards de resumen */
+    .card.text-center.bg-light.flex-fill {
+        min-width: 120px !important;
+    }
+
+    /* Tabs responsive */
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-tabs .nav-link {
+        white-space: nowrap;
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+/* ===========================================
+   MOVIL (<576px)
+   =========================================== */
+@media (max-width: 575.98px) {
+    /* Container mas ajustado */
+    .container {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    .container.mt-4 {
+        margin-top: 1rem !important;
+    }
+
+    /* Navbar tactil */
+    .navbar-holstein {
+        padding: 0.5rem 0;
+    }
+
+    .navbar-holstein .navbar-brand img {
+        height: 32px;
+    }
+
+    .navbar-toggler {
+        padding: 0.5rem;
+        min-width: 48px;
+        min-height: 48px;
+    }
+
+    .navbar-nav .nav-link {
+        padding: 0.75rem 1rem !important;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Hero section */
+    .hero-content {
+        padding: 1.5rem 1rem;
+    }
+
+    .hero-content h1 {
+        font-size: 1.25rem;
+    }
+
+    .hero-content p {
+        font-size: 0.95rem;
+    }
+
+    .hero-content .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    .hero-image {
+        width: 30%;
+        opacity: 0.15;
+    }
+
+    /* Cards */
+    .card {
+        border-radius: 6px;
+    }
+
+    .card-header {
+        padding: 0.75rem 1rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    /* Formularios touch-friendly */
+    .form-control,
+    .form-select {
+        font-size: 16px !important; /* Evita zoom en iOS */
+        min-height: 48px;
+        padding: 0.625rem 0.75rem;
+    }
+
+    .form-label {
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Botones tactiles */
+    .btn {
+        min-height: 44px;
+        padding: 0.625rem 1rem;
+    }
+
+    .btn-sm {
+        min-height: 38px;
+        padding: 0.5rem 0.75rem;
+    }
+
+    /* Info animal - layout movil 2 columnas */
+    #card-animal .row.g-3 > div,
+    #card-novilla .row.g-3 > div,
+    #card-animal .card-body > .row > div,
+    #card-novilla .card-body > .row > div {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+
+    #card-animal .col-md-1,
+    #card-novilla .col-md-1 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+
+    /* Fila de produccion - 2 columnas en movil */
+    #card-animal .bg-light.rounded .row > div,
+    #card-novilla .bg-light.rounded .row > div,
+    .bg-light.rounded > .row > div {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+
+    .fs-5 {
+        font-size: 1rem !important;
+    }
+
+    /* Navegacion animal - grid movil */
+    .d-flex.justify-content-center.gap-2 {
+        flex-wrap: wrap;
+        gap: 0.5rem !important;
+    }
+
+    .d-flex.justify-content-center.gap-2 .btn {
+        flex: 1 1 calc(50% - 0.5rem);
+        min-width: calc(50% - 0.5rem);
+        font-size: 0.8rem;
+        padding: 0.5rem;
+    }
+
+    .d-flex.justify-content-center.gap-2 .dropdown {
+        flex: 1 1 100%;
+        order: -1;
+        margin-bottom: 0.5rem;
+    }
+
+    .d-flex.justify-content-center.gap-2 .dropdown .btn {
+        width: 100%;
+    }
+
+    /* Tabs de novedades - scroll horizontal */
+    .nav-tabs.card-header-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .nav-tabs.card-header-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-tabs .nav-item {
+        flex: 0 0 auto;
+    }
+
+    .nav-tabs .nav-link {
+        white-space: nowrap;
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .nav-tabs .nav-link i {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 1.1rem;
+    }
+
+    /* Tablas responsive */
+    .table-responsive {
+        margin: 0 -1rem;
+        padding: 0 1rem;
+    }
+
+    .table {
+        font-size: 0.8rem;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.5rem 0.4rem;
+        vertical-align: middle;
+    }
+
+    /* Tabla sesiones - ocultar columnas menos importantes */
+    .table-holstein th:nth-child(3),
+    .table-holstein td:nth-child(3),
+    .table-holstein th:nth-child(5),
+    .table-holstein td:nth-child(5) {
+        display: none;
+    }
+
+    /* Modales fullscreen en movil */
+    .modal-dialog {
+        margin: 0;
+        max-width: 100%;
+        min-height: 100vh;
+    }
+
+    .modal-content {
+        border-radius: 0;
+        min-height: 100vh;
+    }
+
+    .modal-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    /* Alertas compactas */
+    .alert {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    /* Badges mas grandes para tacto */
+    .badge {
+        padding: 0.4em 0.6em;
+        font-size: 0.75rem;
+    }
+
+    /* Cards de resumen - 2 columnas */
+    .d-flex.flex-wrap.justify-content-between.gap-2 {
+        gap: 0.5rem !important;
+    }
+
+    .card.text-center.bg-light.flex-fill {
+        min-width: calc(50% - 0.5rem) !important;
+        flex: 0 0 calc(50% - 0.5rem);
+    }
+
+    .card.text-center.bg-light .card-body {
+        padding: 0.5rem !important;
+    }
+
+    .card.text-center.bg-light h5 {
+        font-size: 1.25rem;
+    }
+
+    .card.text-center.bg-light small {
+        font-size: 0.7rem;
+    }
+
+    /* Ordenamiento compacto */
+    .btn-group.btn-group-sm .btn {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    /* Empty state */
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+    }
+
+    /* Footer */
+    .footer-minimal {
+        padding: 1rem;
+        font-size: 0.8rem;
+    }
+
+    /* Header compacto del hato */
+    .card-header.bg-holstein .d-flex {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .card-header.bg-holstein .d-flex > div:first-child {
+        flex: 1 1 100%;
+    }
+
+    .card-header.bg-holstein .d-flex .small {
+        display: none;
+    }
+
+    .card-header.bg-holstein .d-flex .btn {
+        flex: 1;
+    }
+
+    /* Inputs de ordenos mas grandes */
+    .ordeno-input {
+        font-size: 16px !important;
+        min-height: 44px;
+        text-align: center;
+    }
+
+    /* Acordeon compacto */
+    .accordion-button {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .accordion-body {
+        padding: 0;
+    }
+
+    .accordion-body .table {
+        margin-bottom: 0;
+    }
+}
+
+/* ===========================================
+   PANTALLAS MUY PEQUEÑAS (<375px)
+   =========================================== */
+@media (max-width: 374.98px) {
+    .hero-content h1 {
+        font-size: 1.1rem;
+    }
+
+    .hero-content .btn-lg {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+
+    /* Info animal - 1 columna solo en pantallas muy pequeñas */
+    #card-animal .row.g-3 > div,
+    #card-novilla .row.g-3 > div {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Navegacion animal - 1 columna */
+    .nav-buttons-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Ocultar iconos en tabs */
+    .nav-tabs .nav-link i {
+        display: none;
+    }
+
+    /* Cards de resumen - 2 columnas mas compactas */
+    .card.text-center.bg-light.flex-fill {
+        min-width: calc(50% - 0.25rem) !important;
+    }
+}
+
+/* ===========================================
+   PANTALLAS MEDIANAS (576px - 991px) - Tablets y móviles grandes
+   =========================================== */
+@media (min-width: 576px) and (max-width: 991.98px) {
+    /* Info animal - 3 columnas en tablets */
+    #card-animal .row.g-3 > div,
+    #card-novilla .row.g-3 > div {
+        flex: 0 0 33.333% !important;
+        max-width: 33.333% !important;
+    }
+
+    #card-animal .col-md-1,
+    #card-novilla .col-md-1 {
+        flex: 0 0 33.333% !important;
+        max-width: 33.333% !important;
+    }
+
+    /* Fila de produccion - 3 columnas */
+    #card-animal .bg-light.rounded .row > div,
+    #card-novilla .bg-light.rounded .row > div {
+        flex: 0 0 33.333% !important;
+        max-width: 33.333% !important;
+    }
+
+    /* Navegacion en fila */
+    .nav-buttons-grid {
+        display: flex !important;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .nav-buttons-grid .btn {
+        width: auto;
+        flex: 0 0 auto;
+    }
+}
+
+/* ===========================================
+   RESPONSIVE ORIGINAL (ya existente)
+   =========================================== */
+@media (max-width: 768px) {
+    .hero-content {
+        padding: 2rem 1.5rem;
+    }
+
+    .hero-content h1 {
+        font-size: 1.5rem;
+    }
+
+    .hero-image {
+        width: 35%;
+        opacity: 0.2;
+    }
+}
+
+/* ===========================================
+   MEJORAS PARA TOUCH
+   =========================================== */
+@media (pointer: coarse) {
+    /* Dispositivos tactiles */
+    .btn,
+    .nav-link,
+    .dropdown-item,
+    .form-control,
+    .form-select {
+        cursor: pointer;
+    }
+
+    /* Area de toque mas grande */
+    .dropdown-item {
+        padding: 0.75rem 1rem;
+    }
+
+    /* Checkbox y radio mas grandes */
+    input[type="checkbox"],
+    input[type="radio"] {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Scroll suave */
+    .table-responsive,
+    .nav-tabs {
+        scroll-behavior: smooth;
+    }
+}
+
+/* ===========================================
+   MODO OSCURO (respeta preferencia del sistema)
+   =========================================== */
+@media (prefers-color-scheme: dark) {
+    /* Solo si se desea implementar dark mode */
+}
+
+/* ===========================================
+   REDUCCION DE MOVIMIENTO
+   =========================================== */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

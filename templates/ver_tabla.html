@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Ver Tabla - {{ hato['nombre'] if hato else 'CAPRE' }}{% endblock %}
+
+{% block content %}
+
+<div class="card mb-3 border-holstein">
+    <div class="card-header bg-holstein text-white py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <i class="bi bi-table"></i>
+                <strong>TABLA2</strong> — {{ hato['nombre'] if hato else '' }}
+            </div>
+            <div>
+                <span class="badge bg-light text-dark">{{ registros|length }} registros</span>
+                <a href="{{ url_for('principal.index') }}" class="btn btn-sm btn-outline-light ms-2">
+                    <i class="bi bi-arrow-left"></i> Volver a Captura
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 75vh; overflow-y: auto;">
+            <table class="table table-striped table-bordered table-hover table-sm mb-0" style="font-size: 0.75rem;">
+                <thead class="table-dark sticky-top">
+                    <tr>
+                        {% for col in columnas %}
+                        <th class="text-nowrap px-2">{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reg in registros %}
+                    <tr>
+                        {% for col in columnas %}
+                        <td class="text-nowrap px-2">{{ reg[col] if reg[col] is not none else '' }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.table-responsive::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+.table-responsive::-webkit-scrollbar-thumb {
+    background-color: #6c757d;
+    border-radius: 4px;
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}CAPRE - Importar Archivos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h2 class="mb-4"><i class="bi bi-upload"></i> Importar Archivos .dbf</h2>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    Seleccione los 3 archivos .dbf de la ganaderia. Los archivos deben tener el formato:
+                    <code>##_####_capre_tabla1.dbf</code>,
+                    <code>##_####_capre_tabla2.dbf</code>,
+                    <code>##_####_capre_tabla3.dbf</code>
+                </div>
+
+                <!-- Aviso para dispositivos moviles -->
+                <div class="alert alert-warning d-md-none">
+                    <i class="bi bi-phone"></i>
+                    <strong>Nota:</strong> La importacion y exportacion de archivos .dbf funciona mejor desde un computador de escritorio.
+                    Si tiene problemas para seleccionar archivos, intente desde un PC.
+                </div>
+
+                <form method="POST" action="{{ url_for('upload.upload_files') }}" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label for="dbf_files" class="form-label fw-bold">
+                            Archivos .dbf (seleccione los 3)
+                        </label>
+                        <input type="file" class="form-control" id="dbf_files" name="dbf_files"
+                               accept=".dbf" multiple required>
+                        <div class="form-text">
+                            Tabla 1: Informacion del hato |
+                            Tabla 2: Novedades recientes |
+                            Tabla 3: Inventario general
+                        </div>
+                    </div>
+
+                    <div id="file-preview" class="mb-3" style="display:none;">
+                        <h6>Archivos seleccionados:</h6>
+                        <ul id="file-list" class="list-group"></ul>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-holstein" id="btn-import">
+                            <i class="bi bi-database-add"></i> Importar
+                        </button>
+                        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('dbf_files').addEventListener('change', function(e) {
+    const preview = document.getElementById('file-preview');
+    const list = document.getElementById('file-list');
+    list.innerHTML = '';
+
+    if (this.files.length > 0) {
+        preview.style.display = 'block';
+        for (const file of this.files) {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.innerHTML = '<span><i class="bi bi-file-earmark"></i> ' + file.name + '</span>' +
+                          '<span class="badge bg-secondary">' + (file.size / 1024).toFixed(1) + ' KB</span>';
+            list.appendChild(li);
+        }
+    } else {
+        preview.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}
