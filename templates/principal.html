@@ -171,6 +171,7 @@
             <div class="col-6 col-sm-4 col-md-2">
                 <span class="text-muted small d-block">Estado</span>
                 <span class="badge bg-{{ estado_color.get(est, 'secondary') }}" id="animal-estado">{{ estado_map.get(est, est or '—') }}</span>
+                <br><span class="text-muted small" id="animal-fecest">{{ animal['fecest']|fecha }}</span>
             </div>
             <div class="col-6 col-sm-4 col-md-1">
                 <span class="text-muted small d-block">Diagnost.</span>
