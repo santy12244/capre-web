@@ -233,13 +233,21 @@ def guardar_ordenos_grupal():
     animal_ids = request.form.getlist('animal_id')
 
     for animal_id in animal_ids:
-        ord1 = request.form.get(f'ord1_{animal_id}', '').strip()
-        ord2 = request.form.get(f'ord2_{animal_id}', '').strip()
-        ord3 = request.form.get(f'ord3_{animal_id}', '').strip()
+        # Normalizar coma a punto (teclados iOS/Android en español)
+        ord1 = request.form.get(f'ord1_{animal_id}', '').strip().replace(',', '.')
+        ord2 = request.form.get(f'ord2_{animal_id}', '').strip().replace(',', '.')
+        ord3 = request.form.get(f'ord3_{animal_id}', '').strip().replace(',', '.')
 
         ord1_val = float(ord1) if ord1 else None
         ord2_val = float(ord2) if ord2 else None
         ord3_val = float(ord3) if ord3 else None
+
+        # Validar maximo 80 KG
+        for val in (ord1_val, ord2_val, ord3_val):
+            if val is not None and val > 80.0:
+                conn.close()
+                flash('El valor de ordeño no puede superar 80 KG.', 'danger')
+                return redirect(url_for('principal.ordenos_grupal'))
 
         conn.execute(
             'UPDATE tabla2 SET ord1=?, ord2=?, ord3=? WHERE id=?',
@@ -272,9 +280,15 @@ def auto_guardar_ordeno():
         return jsonify({'success': False, 'error': 'Parámetros inválidos'}), 400
 
     try:
-        valor_float = float(valor) if valor and valor.strip() else None
+        # Normalizar coma a punto (teclados iOS/Android en español)
+        valor_str = str(valor).replace(',', '.').strip() if valor else ''
+        valor_float = float(valor_str) if valor_str else None
     except ValueError:
         return jsonify({'success': False, 'error': 'Valor no numérico'}), 400
+
+    # Validar maximo 80 KG
+    if valor_float is not None and valor_float > 80.0:
+        return jsonify({'success': False, 'error': 'El valor no puede superar 80 KG'}), 400
 
     conn = get_db(session_id)
 
@@ -1103,13 +1117,20 @@ def update_ordenos(animal_id):
     conn = get_db(session_id)
     idx = request.form.get('idx', 0, type=int)
 
-    ord1 = request.form.get('ord1', '').strip()
-    ord2 = request.form.get('ord2', '').strip()
-    ord3 = request.form.get('ord3', '').strip()
+    # Normalizar coma a punto (teclados iOS/Android en español)
+    ord1 = request.form.get('ord1', '').strip().replace(',', '.')
+    ord2 = request.form.get('ord2', '').strip().replace(',', '.')
+    ord3 = request.form.get('ord3', '').strip().replace(',', '.')
 
     ord1 = float(ord1) if ord1 else None
     ord2 = float(ord2) if ord2 else None
     ord3 = float(ord3) if ord3 else None
+
+    # Validar maximo 80 KG
+    for val in (ord1, ord2, ord3):
+        if val is not None and val > 80.0:
+            flash('El valor de ordeño no puede superar 80 KG.', 'danger')
+            return redirect(url_for('principal.index', idx=idx, tab='ordenos'))
 
     conn.execute('UPDATE tabla2 SET ord1=?, ord2=?, ord3=? WHERE id=?',
                  (ord1, ord2, ord3, animal_id))

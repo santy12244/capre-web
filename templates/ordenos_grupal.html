@@ -71,7 +71,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="mb-0 fs-5">
+                <p class="mb-0 fs-5" id="mensajePesaje">
                     El pesaje es superior a <strong>36 KG</strong>. ¿Esta seguro?
                 </p>
             </div>
@@ -163,28 +163,31 @@
                                     <td class="align-middle text-center d-none d-md-table-cell">{{ a['dialec'] or '—' }}</td>
                                     <td class="align-middle text-center d-none d-lg-table-cell">{{ a['ultlec'] or '—' }}</td>
                                     <td class="p-1">
-                                        <input type="number" step="0.1" min="0" max="99.9"
+                                        <input type="text" inputmode="decimal"
                                                class="form-control form-control-sm ordeno-input"
                                                name="ord1_{{ a['id'] }}"
                                                value="{{ a['ord1'] if a['ord1'] is not none else '' }}"
                                                data-row="{{ a['id'] }}"
-                                               inputmode="decimal">
+                                               pattern="[0-9]*[.,]?[0-9]*"
+                                               autocomplete="off">
                                     </td>
                                     <td class="p-1">
-                                        <input type="number" step="0.1" min="0" max="99.9"
+                                        <input type="text" inputmode="decimal"
                                                class="form-control form-control-sm ordeno-input"
                                                name="ord2_{{ a['id'] }}"
                                                value="{{ a['ord2'] if a['ord2'] is not none else '' }}"
                                                data-row="{{ a['id'] }}"
-                                               inputmode="decimal">
+                                               pattern="[0-9]*[.,]?[0-9]*"
+                                               autocomplete="off">
                                     </td>
                                     <td class="p-1">
-                                        <input type="number" step="0.1" min="0" max="99.9"
+                                        <input type="text" inputmode="decimal"
                                                class="form-control form-control-sm ordeno-input"
                                                name="ord3_{{ a['id'] }}"
                                                value="{{ a['ord3'] if a['ord3'] is not none else '' }}"
                                                data-row="{{ a['id'] }}"
-                                               inputmode="decimal">
+                                               pattern="[0-9]*[.,]?[0-9]*"
+                                               autocomplete="off">
                                     </td>
                                     <td class="align-middle text-center fw-bold">
                                         <span id="total_{{ a['id'] }}">
@@ -218,20 +221,29 @@
 </div>
 
 <script>
+// Normalizar valor: reemplazar coma por punto (para iOS/Android con teclado español)
+function normalizarDecimal(valor) {
+    return valor.replace(',', '.');
+}
+
+// Obtener valor numerico de un input (maneja comas)
+function valorInput(input) {
+    return parseFloat(normalizarDecimal(input.value)) || 0;
+}
+
 // Calcular totales por fila y columna
 function calcularTotales() {
     var totalOrd1 = 0, totalOrd2 = 0, totalOrd3 = 0;
 
-    // Obtener todas las filas únicas
     var rows = new Set();
     document.querySelectorAll('.ordeno-input').forEach(function(input) {
         rows.add(input.dataset.row);
     });
 
     rows.forEach(function(rowId) {
-        var ord1 = parseFloat(document.querySelector('[name="ord1_' + rowId + '"]').value) || 0;
-        var ord2 = parseFloat(document.querySelector('[name="ord2_' + rowId + '"]').value) || 0;
-        var ord3 = parseFloat(document.querySelector('[name="ord3_' + rowId + '"]').value) || 0;
+        var ord1 = valorInput(document.querySelector('[name="ord1_' + rowId + '"]'));
+        var ord2 = valorInput(document.querySelector('[name="ord2_' + rowId + '"]'));
+        var ord3 = valorInput(document.querySelector('[name="ord3_' + rowId + '"]'));
         var total = ord1 + ord2 + ord3;
 
         document.getElementById('total_' + rowId).textContent = total > 0 ? total.toFixed(1) : '—';
@@ -255,13 +267,13 @@ var saveTimeouts = {};
 function autoGuardarOrdeno(animalId, campo, valor) {
     var key = animalId + '_' + campo;
 
-    // Cancelar timeout anterior para este campo
     if (saveTimeouts[key]) {
         clearTimeout(saveTimeouts[key]);
     }
 
-    // Esperar 800ms antes de guardar (debounce)
     saveTimeouts[key] = setTimeout(function() {
+        // Enviar siempre con punto decimal al servidor
+        var valorNormalizado = normalizarDecimal(valor);
         fetch('{{ url_for("principal.auto_guardar_ordeno") }}', {
             method: 'POST',
             headers: {
@@ -270,7 +282,7 @@ function autoGuardarOrdeno(animalId, campo, valor) {
             body: JSON.stringify({
                 animal_id: animalId,
                 campo: campo,
-                valor: valor
+                valor: valorNormalizado
             })
         });
         delete saveTimeouts[key];
@@ -280,6 +292,7 @@ function autoGuardarOrdeno(animalId, campo, valor) {
 // Variables para el modal de pesaje
 var inputPendiente = null;
 var confirmarPesajeModal = null;
+var MAX_ORDENO = 80.0;
 
 // Función para mover al siguiente input
 function moverAlSiguiente(inputActual) {
@@ -295,7 +308,6 @@ function moverAlSiguiente(inputActual) {
 document.addEventListener('DOMContentLoaded', function() {
     confirmarPesajeModal = new bootstrap.Modal(document.getElementById('confirmarPesajeModal'));
 
-    // Botón Si del modal
     document.getElementById('btnPesajeSi').addEventListener('click', function() {
         if (inputPendiente) {
             var animalId = inputPendiente.dataset.row;
@@ -308,7 +320,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Botón No del modal (también cuando se cierra)
     document.getElementById('btnPesajeNo').addEventListener('click', function() {
         if (inputPendiente) {
             inputPendiente.value = '';
@@ -318,7 +329,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Si cierra el modal con X, también limpiar
     document.getElementById('confirmarPesajeModal').addEventListener('hidden.bs.modal', function() {
         if (inputPendiente) {
             inputPendiente.value = '';
@@ -333,24 +343,44 @@ document.addEventListener('DOMContentLoaded', function() {
 document.querySelectorAll('.ordeno-input').forEach(function(input) {
     input.addEventListener('change', function() {
         var inputActual = this;
+        // Normalizar coma a punto
+        this.value = normalizarDecimal(this.value);
         var valor = parseFloat(this.value) || 0;
         var animalId = this.dataset.row;
         var campo = this.name.split('_')[0]; // ord1, ord2, ord3
 
+        // Validar maximo 80 KG
+        if (valor > MAX_ORDENO) {
+            document.getElementById('mensajePesaje').innerHTML =
+                'El valor <strong>' + valor + ' KG</strong> supera el maximo permitido de <strong>' + MAX_ORDENO + ' KG</strong>.';
+            inputPendiente = inputActual;
+            // No permitir confirmar, solo corregir
+            document.getElementById('btnPesajeSi').style.display = 'none';
+            document.getElementById('btnPesajeNo').innerHTML = '<i class="bi bi-pencil"></i> Corregir';
+            confirmarPesajeModal.show();
+            return;
+        }
+
+        // Restaurar botones del modal para pesaje alto (> 36) pero valido
+        document.getElementById('btnPesajeSi').style.display = '';
+        document.getElementById('btnPesajeNo').innerHTML = '<i class="bi bi-x-lg"></i> No';
+
         // Validar si el valor es mayor a 36
         if (valor > 36) {
+            document.getElementById('mensajePesaje').innerHTML =
+                'El pesaje es superior a <strong>36 KG</strong>. ¿Esta seguro?';
             inputPendiente = inputActual;
             confirmarPesajeModal.show();
             return;
         }
 
-        // Valor <= 36, guardar y avanzar
+        // Valor valido, guardar y avanzar
         calcularTotales();
         autoGuardarOrdeno(animalId, campo, this.value);
         moverAlSiguiente(inputActual);
     });
 
-    // También calcular totales mientras escribe (sin guardar)
+    // Calcular totales mientras escribe (sin guardar)
     input.addEventListener('input', function() {
         calcularTotales();
     });
