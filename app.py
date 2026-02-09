@@ -45,14 +45,20 @@ def create_app():
     # Make sessions permanent and generate unique device ID
     @app.before_request
     def setup_session():
-        from flask import session
+        from flask import session, request
         import uuid
         session.permanent = True
-        # Generar ID unico por dispositivo/navegador si no existe
-        if 'device_id' not in session:
+        # No generar device_id nuevo si es la ruta de restauracion
+        # (para que el endpoint pueda asignar el device_id guardado en localStorage)
+        if 'device_id' not in session and request.endpoint != 'main.restore_device':
             session['device_id'] = str(uuid.uuid4())
-            # Limpiar cualquier sesion activa heredada
             session.pop('active_session_id', None)
+
+    # Inyectar device_id en todos los templates para que JavaScript lo use
+    @app.context_processor
+    def inject_device_id():
+        from flask import session
+        return {'current_device_id': session.get('device_id', '')}
 
     # Headers de seguridad y cache
     @app.after_request

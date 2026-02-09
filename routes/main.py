@@ -1,7 +1,23 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, session, make_response
+from flask import Blueprint, render_template, redirect, url_for, flash, session, make_response, request, jsonify
 from models.database import list_sessions, delete_session
 
 bp = Blueprint('main', __name__)
+
+
+@bp.route('/api/restore-device', methods=['POST'])
+def restore_device():
+    """Restaura el device_id desde localStorage cuando la cookie se perdio."""
+    data = request.get_json(silent=True)
+    if not data or not data.get('device_id'):
+        return jsonify({'ok': False}), 400
+    stored_device_id = data['device_id']
+    # Verificar que el device_id existe en al menos una sesion en el servidor
+    sessions = list_sessions(device_id=stored_device_id)
+    if sessions:
+        session['device_id'] = stored_device_id
+        session.modified = True
+        return jsonify({'ok': True, 'restored': True})
+    return jsonify({'ok': False, 'restored': False}), 404
 
 
 @bp.route('/')

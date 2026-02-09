@@ -139,6 +139,47 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+    // === Respaldo de device_id en localStorage ===
+    // Si la cookie se pierde, localStorage permite restaurar el vinculo con las sesiones
+    (function() {
+        var STORAGE_KEY = 'capre_device_id';
+        var serverDeviceId = '{{ current_device_id }}';
+        var storedDeviceId = localStorage.getItem(STORAGE_KEY);
+
+        if (serverDeviceId && storedDeviceId && serverDeviceId === storedDeviceId) {
+            // Todo sincronizado, no hacer nada
+            return;
+        }
+
+        if (serverDeviceId && !storedDeviceId) {
+            // Primera vez o localStorage fue limpiado: guardar el device_id del servidor
+            localStorage.setItem(STORAGE_KEY, serverDeviceId);
+            return;
+        }
+
+        if (storedDeviceId && (!serverDeviceId || serverDeviceId !== storedDeviceId)) {
+            // La cookie se perdio pero localStorage tiene el device_id original.
+            // Intentar restaurar en el servidor
+            fetch('/api/restore-device', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({device_id: storedDeviceId})
+            }).then(function(resp) {
+                if (resp.ok) {
+                    // device_id restaurado, recargar para ver las sesiones
+                    window.location.reload();
+                } else {
+                    // No se encontraron sesiones con ese device_id, actualizar localStorage
+                    if (serverDeviceId) {
+                        localStorage.setItem(STORAGE_KEY, serverDeviceId);
+                    }
+                }
+            }).catch(function() {
+                // Error de red, no hacer nada (se reintentara en la proxima visita)
+            });
+        }
+    })();
+
     // Forzar mayusculas en todos los inputs de texto al enviar formularios
     document.querySelectorAll('form').forEach(function(form) {
         form.addEventListener('submit', function() {
