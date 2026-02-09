@@ -170,6 +170,31 @@ def api_get_animal(idx):
     })
 
 
+@bp.route('/api/validar-exportacion')
+def validar_exportacion():
+    """Valida si hay animales en produccion sin pesaje de leche antes de exportar."""
+    session_id = _get_session_id()
+    if not session_id:
+        return jsonify({'ok': False, 'error': 'Sin sesion activa'}), 401
+
+    conn = get_db(session_id)
+    # Misma consulta que ordenos_grupal: animales en produccion (estado 1, 2 o con parto) sin salida
+    sin_pesaje = conn.execute('''
+        SELECT orejera, nombre
+        FROM tabla2
+        WHERE (estado IN ('1', '2') OR fecparto IS NOT NULL)
+          AND fecsale IS NULL
+          AND (ord1 IS NULL OR ord1 = 0)
+          AND (ord2 IS NULL OR ord2 = 0)
+          AND (ord3 IS NULL OR ord3 = 0)
+        ORDER BY nombre ASC
+    ''').fetchall()
+    conn.close()
+
+    animales = [{'orejera': a['orejera'] or '', 'nombre': a['nombre'] or ''} for a in sin_pesaje]
+    return jsonify({'ok': True, 'sin_pesaje': animales, 'total': len(animales)})
+
+
 @bp.route('/principal/ordenos')
 def ordenos_grupal():
     """Vista grupal de ordeños para animales en producción."""

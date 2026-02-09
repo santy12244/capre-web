@@ -111,26 +111,59 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-3">
-                        <strong>Antes de continuar, por favor verifique lo siguiente:</strong>
-                    </p>
-                    <ul class="mb-3">
-                        <li>Confirme que ha registrado <strong>todas las novedades del mes</strong> (servicios, partos, secas, salidas, sanidad).</li>
-                        <li>Verifique que ha incluido el <strong>pesaje de leche</strong> correspondiente.</li>
-                        <li>Revise que los datos ingresados sean correctos.</li>
-                    </ul>
-                    <div class="alert alert-info small mb-0">
-                        <i class="bi bi-info-circle"></i>
-                        Si posteriormente identifica algun dato erroneo o inconsistencia, por favor detallelo en el correo electronico adjuntando las tablas generadas por CAPRE-Web para su correccion.
+                    <!-- Contenido inicial: checklist -->
+                    <div id="exportChecklist">
+                        <p class="mb-3">
+                            <strong>Antes de continuar, por favor verifique lo siguiente:</strong>
+                        </p>
+                        <ul class="mb-3">
+                            <li>Confirme que ha registrado <strong>todas las novedades del mes</strong> (servicios, partos, secas, salidas, sanidad).</li>
+                            <li>Verifique que ha incluido el <strong>pesaje de leche</strong> correspondiente.</li>
+                            <li>Revise que los datos ingresados sean correctos.</li>
+                        </ul>
+                        <div class="alert alert-info small mb-0">
+                            <i class="bi bi-info-circle"></i>
+                            Si posteriormente identifica algun dato erroneo o inconsistencia, por favor detallelo en el correo electronico adjuntando las tablas generadas por CAPRE-Web para su correccion.
+                        </div>
+                    </div>
+                    <!-- Alerta de animales sin pesaje (oculta inicialmente) -->
+                    <div id="exportAlertaPesaje" style="display:none;">
+                        <div class="alert alert-danger mb-3">
+                            <i class="bi bi-exclamation-octagon-fill"></i>
+                            <strong id="exportAlertaTitulo"></strong>
+                        </div>
+                        <div style="max-height: 200px; overflow-y: auto;">
+                            <table class="table table-sm table-bordered mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width:80px;">Orejera</th>
+                                        <th>Nombre</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="exportListaSinPesaje"></tbody>
+                            </table>
+                        </div>
+                        <div class="alert alert-warning small mt-3 mb-0">
+                            <i class="bi bi-info-circle"></i>
+                            Puede ir a <strong>Ordeños</strong> para registrar el pesaje, o exportar de todos modos.
+                        </div>
+                    </div>
+                    <!-- Spinner de validacion -->
+                    <div id="exportValidando" style="display:none;" class="text-center py-3">
+                        <div class="spinner-border text-holstein" role="status"></div>
+                        <p class="mt-2 mb-0 text-muted">Validando pesaje de leche...</p>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-pencil-square"></i> Seguir Capturando
                     </button>
-                    <a href="{{ url_for('upload.export_files') }}" class="btn btn-success">
-                        <i class="bi bi-check-circle"></i> Confirmar y Exportar
+                    <a href="{{ url_for('principal.ordenos_grupal') }}" id="btnIrOrdenos" class="btn btn-warning" style="display:none;">
+                        <i class="bi bi-droplet"></i> Ir a Ordeños
                     </a>
+                    <button type="button" id="btnConfirmarExportar" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Confirmar y Exportar
+                    </button>
                 </div>
             </div>
         </div>
@@ -218,6 +251,88 @@
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
+
+    // === Validacion de pesaje antes de exportar ===
+    (function() {
+        var btnExportar = document.getElementById('btnConfirmarExportar');
+        if (!btnExportar) return;
+
+        var exportUrl = '{{ url_for("upload.export_files") if session.get("active_session_id") else "" }}';
+        var validarUrl = '{{ url_for("principal.validar_exportacion") if session.get("active_session_id") else "" }}';
+        var yaValidado = false;
+
+        function mostrarListaSinPesaje(data) {
+            document.getElementById('exportValidando').style.display = 'none';
+            document.getElementById('exportChecklist').style.display = 'none';
+            btnExportar.disabled = false;
+
+            document.getElementById('exportAlertaTitulo').textContent =
+                data.total + (data.total === 1 ? ' animal en produccion' : ' animales en produccion') +
+                ' sin pesaje de leche:';
+
+            var tbody = document.getElementById('exportListaSinPesaje');
+            tbody.innerHTML = '';
+            data.sin_pesaje.forEach(function(a) {
+                var tr = document.createElement('tr');
+                tr.innerHTML = '<td>' + a.orejera + '</td><td><strong>' + a.nombre + '</strong></td>';
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('exportAlertaPesaje').style.display = '';
+            document.getElementById('btnIrOrdenos').style.display = '';
+            btnExportar.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Exportar de todos modos';
+            btnExportar.classList.remove('btn-success');
+            btnExportar.classList.add('btn-outline-danger');
+            yaValidado = true;
+        }
+
+        btnExportar.addEventListener('click', function(e) {
+            if (yaValidado) {
+                window.location.href = exportUrl;
+                return;
+            }
+
+            document.getElementById('exportChecklist').style.display = 'none';
+            document.getElementById('exportAlertaPesaje').style.display = 'none';
+            document.getElementById('exportValidando').style.display = '';
+            document.getElementById('btnIrOrdenos').style.display = 'none';
+            btnExportar.disabled = true;
+
+            fetch(validarUrl)
+                .then(function(resp) {
+                    if (!resp.ok) {
+                        throw new Error('Error del servidor: ' + resp.status);
+                    }
+                    return resp.json();
+                })
+                .then(function(data) {
+                    if (data.total && data.total > 0) {
+                        mostrarListaSinPesaje(data);
+                    } else {
+                        window.location.href = exportUrl;
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Error validando exportacion:', err);
+                    // En caso de error, mostrar checklist y dejar que el usuario decida
+                    document.getElementById('exportValidando').style.display = 'none';
+                    document.getElementById('exportChecklist').style.display = '';
+                    btnExportar.disabled = false;
+                });
+        });
+
+        document.getElementById('modalConfirmarExportar').addEventListener('hidden.bs.modal', function() {
+            yaValidado = false;
+            document.getElementById('exportChecklist').style.display = '';
+            document.getElementById('exportAlertaPesaje').style.display = 'none';
+            document.getElementById('exportValidando').style.display = 'none';
+            document.getElementById('btnIrOrdenos').style.display = 'none';
+            btnExportar.innerHTML = '<i class="bi bi-check-circle"></i> Confirmar y Exportar';
+            btnExportar.classList.remove('btn-outline-danger');
+            btnExportar.classList.add('btn-success');
+            btnExportar.disabled = false;
+        });
+    })();
     </script>
 </body>
 </html>
