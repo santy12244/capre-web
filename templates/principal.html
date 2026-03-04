@@ -355,7 +355,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <form method="POST" action="{{ url_for('principal.borrar_servicios', animal_id=animal['id']) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('principal.borrar_evento', animal_id=animal['id'], evento='servicios') }}" style="display:inline;">
                             <input type="hidden" name="idx" value="{{ animal_idx }}">
                             <button type="submit" class="btn btn-danger">Si, eliminar</button>
                         </form>
@@ -406,7 +406,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <form method="POST" action="{{ url_for('principal.borrar_secas', animal_id=animal['id']) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('principal.borrar_evento', animal_id=animal['id'], evento='secas') }}" style="display:inline;">
                             <input type="hidden" name="idx" value="{{ animal_idx }}">
                             <button type="submit" class="btn btn-danger">Si, eliminar</button>
                         </form>
@@ -526,7 +526,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <form method="POST" action="{{ url_for('principal.borrar_chequeo', animal_id=animal['id']) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('principal.borrar_evento', animal_id=animal['id'], evento='chequeo') }}" style="display:inline;">
                             <input type="hidden" name="idx" value="{{ animal_idx }}">
                             <button type="submit" class="btn btn-danger">Si, eliminar</button>
                         </form>
@@ -685,7 +685,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <form method="POST" action="{{ url_for('principal.borrar_partos', animal_id=animal['id']) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('principal.borrar_evento', animal_id=animal['id'], evento='partos') }}" style="display:inline;">
                             <input type="hidden" name="idx" value="{{ animal_idx }}">
                             <button type="submit" class="btn btn-danger">Si, eliminar</button>
                         </form>
@@ -743,7 +743,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <form method="POST" action="{{ url_for('principal.borrar_salidas', animal_id=animal['id']) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('principal.borrar_evento', animal_id=animal['id'], evento='salidas') }}" style="display:inline;">
                             <input type="hidden" name="idx" value="{{ animal_idx }}">
                             <button type="submit" class="btn btn-danger">Si, eliminar</button>
                         </form>
@@ -799,7 +799,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <form method="POST" action="{{ url_for('principal.borrar_sanitario', animal_id=animal['id']) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('principal.borrar_evento', animal_id=animal['id'], evento='sanitario') }}" style="display:inline;">
                             <input type="hidden" name="idx" value="{{ animal_idx }}">
                             <button type="submit" class="btn btn-danger">Si, eliminar</button>
                         </form>
@@ -919,6 +919,19 @@ function validarFechaValidacion(form, inputFecha, inputFecultprb) {
         });
     }
 })();
+
+// Enfocar el input de búsqueda al abrir el dropdown
+document.querySelector('.nav-search-dropdown')?.addEventListener('shown.bs.dropdown', function() {
+    const input = document.getElementById('buscar-animal');
+    if (input) {
+        input.value = '';
+        input.focus();
+        // Mostrar todos los ítems al abrir
+        document.querySelectorAll('.animal-item').forEach(function(item) {
+            item.style.display = '';
+        });
+    }
+});
 
 // Animal search filter
 document.getElementById('buscar-animal')?.addEventListener('input', function() {

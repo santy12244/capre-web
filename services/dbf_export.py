@@ -71,6 +71,9 @@ ANIMAL_DBF_FIELDS = [
     ('PTOS', 'N', 4, 0),
 ]
 
+# Precalculado para evitar recalcular en cada exportación
+ANIMAL_DBF_FIELD_NAMES = [f.lower() for f, _, _, _ in ANIMAL_DBF_FIELDS]
+
 
 def _write_dbf_header(f, num_records, fields):
     """Write DBF file header."""
@@ -210,7 +213,7 @@ def export_all_tables(session_id, output_dir):
     export_table_to_dbf(
         session_id, 'tabla2', tabla2_path,
         ANIMAL_DBF_FIELDS,
-        [f.lower() for f, _, _, _ in ANIMAL_DBF_FIELDS]
+        ANIMAL_DBF_FIELD_NAMES,
     )
 
     # Export tabla3
@@ -218,7 +221,7 @@ def export_all_tables(session_id, output_dir):
     export_table_to_dbf(
         session_id, 'tabla3', tabla3_path,
         ANIMAL_DBF_FIELDS,
-        [f.lower() for f, _, _, _ in ANIMAL_DBF_FIELDS]
+        ANIMAL_DBF_FIELD_NAMES,
     )
 
     # Get farm name for ZIP filename

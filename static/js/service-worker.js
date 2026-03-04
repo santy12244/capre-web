@@ -6,13 +6,14 @@ const STATIC_CACHE = 'capre-static-v2';
 // Rutas relativas al scope del SW (se resuelven dinamicamente)
 const STATIC_ASSETS = [
     '../css/style.css',
+    '../css/vendor/bootstrap.min.css',
+    '../css/vendor/bootstrap-icons.min.css',
+    '../css/vendor/fonts/bootstrap-icons.woff2',
+    '../js/vendor/bootstrap.bundle.min.js',
     '../img/logo_small.png',
     '../img/logo_vaca.png',
     '../img/vaca_hero.jpg',
-    '../manifest.json',
-    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
-    'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css',
-    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
+    '../manifest.json'
 ];
 
 // Rutas API (network-first)
@@ -33,7 +34,7 @@ self.addEventListener('install', event => {
         caches.open(STATIC_CACHE)
             .then(cache => {
                 console.log('CAPRE SW: Cacheando archivos estaticos');
-                return cache.addAll(STATIC_ASSETS.filter(url => !url.startsWith('http')));
+                return cache.addAll(STATIC_ASSETS);
             })
             .then(() => self.skipWaiting())
     );

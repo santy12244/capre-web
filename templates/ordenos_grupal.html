@@ -131,8 +131,15 @@
                         </div>
                     </div>
                 </div>
-                <div class="alert alert-info mb-3" role="alert">
-                    <i class="bi bi-info-circle"></i> Los datos se guardan automáticamente al escribir
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <div class="alert alert-info mb-0 flex-grow-1 py-2" role="alert">
+                        <i class="bi bi-info-circle"></i> Los datos se guardan automáticamente al escribir
+                    </div>
+                    <div class="alert mb-0 py-2 px-3 d-flex align-items-center gap-2" id="alerta-sin-pesaje"
+                         role="alert" style="background:#eef2f7;border:1.5px solid #90a4ae;border-radius:6px;display:none!important;">
+                        <i class="bi bi-exclamation-circle text-secondary fs-5"></i>
+                        <span>Sin pesaje: <strong id="contador-sin-pesaje">0</strong> animal(es)</span>
+                    </div>
                 </div>
 
                 <div>
@@ -220,6 +227,25 @@
     </div>
 </div>
 
+<style>
+/* Filas sin pesaje registrado */
+tr.fila-sin-pesaje {
+    background-color: #f0f4f8 !important;
+}
+tr.fila-sin-pesaje td:first-child {
+    border-left: 3px solid #90a4ae;
+}
+/* Inputs de ordeño más grandes en móvil para facilitar toque */
+@media (max-width: 767px) {
+    .ordeno-input {
+        font-size: 1rem !important;
+        padding: 0.4rem 0.25rem !important;
+        text-align: center;
+        min-height: 2.4rem;
+    }
+}
+</style>
+
 <script>
 // Normalizar valor: reemplazar coma por punto (para iOS/Android con teclado español)
 function normalizarDecimal(valor) {
@@ -259,6 +285,7 @@ function calcularTotales() {
     document.getElementById('total-col-ord2').textContent = totalOrd2 > 0 ? totalOrd2.toFixed(1) : '—';
     document.getElementById('total-col-ord3').textContent = totalOrd3 > 0 ? totalOrd3.toFixed(1) : '—';
     document.getElementById('total-general').textContent = totalGeneral > 0 ? totalGeneral.toFixed(1) : '—';
+    actualizarSinPesaje();
 }
 
 // Auto-guardar ordeño individual con debounce
@@ -338,6 +365,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Actualizar indicador de animales sin pesaje
+function actualizarSinPesaje() {
+    var sinPesaje = 0;
+    var rows = new Set();
+    document.querySelectorAll('.ordeno-input').forEach(function(i) { rows.add(i.dataset.row); });
+
+    rows.forEach(function(rowId) {
+        var ord1 = valorInput(document.querySelector('[name="ord1_' + rowId + '"]'));
+        var ord2 = valorInput(document.querySelector('[name="ord2_' + rowId + '"]'));
+        var ord3 = valorInput(document.querySelector('[name="ord3_' + rowId + '"]'));
+        var fila = document.querySelector('[name="ord1_' + rowId + '"]').closest('tr');
+        if (ord1 === 0 && ord2 === 0 && ord3 === 0) {
+            fila.classList.add('fila-sin-pesaje');
+            sinPesaje++;
+        } else {
+            fila.classList.remove('fila-sin-pesaje');
+        }
+    });
+
+    var alerta = document.getElementById('alerta-sin-pesaje');
+    document.getElementById('contador-sin-pesaje').textContent = sinPesaje;
+    if (sinPesaje > 0) {
+        alerta.style.removeProperty('display');
+    } else {
+        alerta.style.display = 'none';
+    }
+}
 
 // Ejecutar al cargar y al cambiar cualquier input
 document.querySelectorAll('.ordeno-input').forEach(function(input) {

@@ -1,6 +1,9 @@
 import os
 import sqlite3
+import logging
 import config
+
+logger = logging.getLogger(__name__)
 
 TABLA2_COLUMNS = """
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -116,7 +119,7 @@ def get_db_path(session_id):
 
 def get_db(session_id):
     db_path = get_db_path(session_id)
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, timeout=10)
     conn.row_factory = sqlite3.Row
     # Optimizaciones SQLite para mejor rendimiento
     conn.execute('PRAGMA journal_mode = WAL')
@@ -175,7 +178,8 @@ def list_sessions(device_id=None):
                         'fecultprb': fecultprb,
                         'fecprbact': fecprbact,
                     })
-            except Exception:
+            except Exception as e:
+                logger.warning('No se pudo leer sesion %s: %s', session_id, e)
                 continue
     sessions.sort(key=lambda s: s['created_at'], reverse=True)
     return sessions
@@ -197,8 +201,8 @@ def set_session_device(session_id, device_id):
         # Intentar agregar columna si no existe (para bases de datos existentes)
         try:
             conn.execute('ALTER TABLE session_meta ADD COLUMN device_id TEXT')
-        except:
-            pass
+        except sqlite3.OperationalError:
+            pass  # Columna ya existe
         conn.execute('UPDATE session_meta SET device_id = ? WHERE id = 1', (device_id,))
         conn.commit()
         conn.close()
@@ -209,5 +213,8 @@ def set_session_device(session_id, device_id):
 
 def delete_session(session_id):
     db_path = get_db_path(session_id)
-    if os.path.exists(db_path):
-        os.remove(db_path)
+    # Eliminar el archivo principal y los archivos WAL auxiliares de SQLite
+    for suffix in ('', '-wal', '-shm'):
+        path = db_path + suffix
+        if os.path.exists(path):
+            os.remove(path)

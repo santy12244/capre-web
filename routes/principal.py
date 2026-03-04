@@ -1,12 +1,15 @@
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session as flask_session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from models.database import get_db
+from services.helpers import (
+    get_session_id as _get_session_id,
+    format_fecha,
+    parsear_ordeno,
+    ESTADO_MAP, ESTADO_COLOR, PAC_MAP, PAC_COLOR,
+    DIAS_MIN_SERVICIO, DIAS_MIN_NOVILLA, DIAS_MIN_ABORTO,
+)
 
 bp = Blueprint('principal', __name__)
-
-
-def _get_session_id():
-    return flask_session.get('active_session_id')
 
 
 @bp.route('/principal')
@@ -78,64 +81,39 @@ def api_get_animal(idx):
         return jsonify({'success': False, 'error': 'Sin sesión activa'}), 401
 
     conn = get_db(session_id)
+    try:
+        total = conn.execute('SELECT COUNT(*) FROM tabla2').fetchone()[0]
 
-    # Load animal list from tabla2
-    animales = conn.execute(
-        'SELECT id, codint, orejera, nombre FROM tabla2 ORDER BY nombre'
-    ).fetchall()
+        if total == 0:
+            return jsonify({'success': False, 'error': 'No hay animales'}), 404
 
-    if not animales:
+        idx = max(0, min(idx, total - 1))
+        animal_row = conn.execute(
+            'SELECT * FROM tabla2 ORDER BY nombre LIMIT 1 OFFSET ?', (idx,)
+        ).fetchone()
+    finally:
         conn.close()
-        return jsonify({'success': False, 'error': 'No hay animales'}), 404
-
-    # Validate index
-    if idx < 0:
-        idx = 0
-    if idx >= len(animales):
-        idx = len(animales) - 1
-
-    animal_id = animales[idx]['id']
-    animal_row = conn.execute('SELECT * FROM tabla2 WHERE id = ?', (animal_id,)).fetchone()
-    conn.close()
 
     # Convert to dict
     animal = dict(animal_row)
 
-    # Format dates for display
-    def format_fecha(fecha_str):
-        if not fecha_str:
-            return '—'
-        try:
-            meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC']
-            d = datetime.strptime(fecha_str, '%Y-%m-%d')
-            return f"{d.day:02d}/{meses[d.month-1]}/{d.year}"
-        except:
-            return fecha_str or '—'
-
-    # Estado mapping
-    estado_map = {'0': 'Ternera', '1': 'Vaca parida', '2': 'Novilla parida', '3': 'Ing. seca', '4': 'Ing. produccion', '5': 'Aborto', '6': 'Seca'}
-    estado_color = {'0': 'secondary', '1': 'success', '2': 'success', '3': 'warning', '4': 'info', '5': 'danger', '6': 'dark'}
     est = str(animal.get('estado', ''))
-
-    # PAC mapping
     pac_val = str(animal.get('pac', '')).upper().strip()
-    pac_map = {'A': 'Abierta', 'P': 'Preñada'}
-    pac_color = {'A': 'danger', 'P': 'success'}
 
     return jsonify({
         'success': True,
         'animal_idx': idx,
-        'total_animales': len(animales),
+        'total_animales': total,
         'animal': {
             'id': animal['id'],
             'orejera': animal.get('orejera', ''),
             'nombre': animal.get('nombre', ''),
             'codint': animal.get('codint', ''),
             'registro': animal.get('registro') or '—',
-            'estado': estado_map.get(est, est or '—'),
-            'estado_color': estado_color.get(est, 'info'),
-            'diagnostico': pac_map.get(pac_val, '') if pac_val else '',
-            'diagnostico_color': pac_color.get(pac_val, 'secondary'),
+            'estado': ESTADO_MAP.get(est, est or '—'),
+            'estado_color': ESTADO_COLOR.get(est, 'info'),
+            'diagnostico': PAC_MAP.get(pac_val, '') if pac_val else '',
+            'diagnostico_color': PAC_COLOR.get(pac_val, 'secondary'),
             'ultlec': animal.get('ultlec') or '—',
             'dialec': animal.get('dialec') or '—',
             'numser': animal.get('numser') or '0',
@@ -178,12 +156,13 @@ def validar_exportacion():
         return jsonify({'ok': False, 'error': 'Sin sesion activa'}), 401
 
     conn = get_db(session_id)
-    # Misma consulta que ordenos_grupal: animales en produccion (estado 1, 2 o con parto) sin salida
+    # Misma lógica que ordenos_grupal
     sin_pesaje = conn.execute('''
         SELECT orejera, nombre
         FROM tabla2
         WHERE (estado IN ('1', '2') OR fecparto IS NOT NULL)
           AND fecsale IS NULL
+          AND (fecseca IS NULL OR (fecparto IS NOT NULL AND fecparto > fecseca))
           AND (ord1 IS NULL OR ord1 = 0)
           AND (ord2 IS NULL OR ord2 = 0)
           AND (ord3 IS NULL OR ord3 = 0)
@@ -226,11 +205,16 @@ def ordenos_grupal():
     }
     order_clause = order_map.get(orden, 'nombre ASC')
 
-    # Animales en estado 1, 2 o con parto registrado, EXCLUYENDO los que tienen salida reportada
+    # Animales en producción activa:
+    # - estado 1/2, o con parto registrado
+    # - sin salida
+    # - sin seca, O si hay seca pero el parto es posterior (nueva lactancia)
     animales = conn.execute(f'''
         SELECT id, codint, orejera, nombre, estado, fecest, fecparto, dialec, ultlec, ord1, ord2, ord3
         FROM tabla2
-        WHERE (estado IN ('1', '2') OR fecparto IS NOT NULL) AND fecsale IS NULL
+        WHERE (estado IN ('1', '2') OR fecparto IS NOT NULL)
+          AND fecsale IS NULL
+          AND (fecseca IS NULL OR (fecparto IS NOT NULL AND fecparto > fecseca))
         ORDER BY {order_clause}
     ''').fetchall()
     conn.close()
@@ -257,30 +241,29 @@ def guardar_ordenos_grupal():
     # Obtener todos los IDs de animales del formulario
     animal_ids = request.form.getlist('animal_id')
 
-    for animal_id in animal_ids:
-        # Normalizar coma a punto (teclados iOS/Android en español)
-        ord1 = request.form.get(f'ord1_{animal_id}', '').strip().replace(',', '.')
-        ord2 = request.form.get(f'ord2_{animal_id}', '').strip().replace(',', '.')
-        ord3 = request.form.get(f'ord3_{animal_id}', '').strip().replace(',', '.')
-
-        ord1_val = float(ord1) if ord1 else None
-        ord2_val = float(ord2) if ord2 else None
-        ord3_val = float(ord3) if ord3 else None
-
-        # Validar maximo 80 KG
-        for val in (ord1_val, ord2_val, ord3_val):
-            if val is not None and val > 80.0:
-                conn.close()
-                flash('El valor de ordeño no puede superar 80 KG.', 'danger')
+    try:
+        for animal_id in animal_ids:
+            ord1_val, err = parsear_ordeno(request.form.get(f'ord1_{animal_id}', ''))
+            if err:
+                flash(err, 'danger')
+                return redirect(url_for('principal.ordenos_grupal'))
+            ord2_val, err = parsear_ordeno(request.form.get(f'ord2_{animal_id}', ''))
+            if err:
+                flash(err, 'danger')
+                return redirect(url_for('principal.ordenos_grupal'))
+            ord3_val, err = parsear_ordeno(request.form.get(f'ord3_{animal_id}', ''))
+            if err:
+                flash(err, 'danger')
                 return redirect(url_for('principal.ordenos_grupal'))
 
-        conn.execute(
-            'UPDATE tabla2 SET ord1=?, ord2=?, ord3=? WHERE id=?',
-            (ord1_val, ord2_val, ord3_val, animal_id)
-        )
+            conn.execute(
+                'UPDATE tabla2 SET ord1=?, ord2=?, ord3=? WHERE id=?',
+                (ord1_val, ord2_val, ord3_val, animal_id)
+            )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+    finally:
+        conn.close()
 
     flash('Ordeños guardados correctamente.', 'success')
     return redirect(url_for('principal.ordenos_grupal'))
@@ -304,28 +287,19 @@ def auto_guardar_ordeno():
     if not animal_id or campo not in ('ord1', 'ord2', 'ord3'):
         return jsonify({'success': False, 'error': 'Parámetros inválidos'}), 400
 
-    try:
-        # Normalizar coma a punto (teclados iOS/Android en español)
-        valor_str = str(valor).replace(',', '.').strip() if valor else ''
-        valor_float = float(valor_str) if valor_str else None
-    except ValueError:
-        return jsonify({'success': False, 'error': 'Valor no numérico'}), 400
-
-    # Validar maximo 80 KG
-    if valor_float is not None and valor_float > 80.0:
-        return jsonify({'success': False, 'error': 'El valor no puede superar 80 KG'}), 400
+    valor_float, err = parsear_ordeno(valor)
+    if err:
+        return jsonify({'success': False, 'error': err}), 400
 
     conn = get_db(session_id)
-
-    # Validar que exista fecha de validacion
-    hato = conn.execute('SELECT fecprbact FROM tabla1 LIMIT 1').fetchone()
-    if not hato or not hato['fecprbact']:
+    try:
+        hato = conn.execute('SELECT fecprbact FROM tabla1 LIMIT 1').fetchone()
+        if not hato or not hato['fecprbact']:
+            return jsonify({'success': False, 'error': 'Falta Fecha de Validacion'}), 400
+        conn.execute(f'UPDATE tabla2 SET {campo}=? WHERE id=?', (valor_float, animal_id))
+        conn.commit()
+    finally:
         conn.close()
-        return jsonify({'success': False, 'error': 'Falta Fecha de Validacion'}), 400
-
-    conn.execute(f'UPDATE tabla2 SET {campo}=? WHERE id=?', (valor_float, animal_id))
-    conn.commit()
-    conn.close()
 
     return jsonify({'success': True})
 
@@ -338,57 +312,42 @@ def api_get_novilla(idx):
         return jsonify({'success': False, 'error': 'Sin sesión activa'}), 401
 
     conn = get_db(session_id)
+    try:
+        # Novillas con estado='0' de ambas tablas (solo columnas necesarias para índice)
+        animales = conn.execute('''
+            SELECT id, 'tabla2' as tabla, nombre FROM tabla2 WHERE estado = '0'
+            UNION ALL
+            SELECT id, 'tabla3' as tabla, nombre FROM tabla3 WHERE estado = '0'
+            ORDER BY nombre
+        ''').fetchall()
 
-    # Novillas con estado='0' de ambas tablas
-    animales = conn.execute('''
-        SELECT id, codint, orejera, nombre, 'tabla2' as tabla FROM tabla2 WHERE estado = '0'
-        UNION ALL
-        SELECT id, codint, orejera, nombre, 'tabla3' as tabla FROM tabla3 WHERE estado = '0'
-        ORDER BY nombre
-    ''').fetchall()
+        if not animales:
+            return jsonify({'success': False, 'error': 'No hay novillas'}), 404
 
-    if not animales:
+        idx = max(0, min(idx, len(animales) - 1))
+        animal_id = animales[idx]['id']
+        tabla_origen = animales[idx]['tabla']
+
+        # Obtener datos completos
+        if tabla_origen == 'tabla2':
+            animal = dict(conn.execute('SELECT * FROM tabla2 WHERE id = ?', (animal_id,)).fetchone())
+        else:
+            animal_t3 = conn.execute('SELECT * FROM tabla3 WHERE id = ?', (animal_id,)).fetchone()
+            animal_t2 = conn.execute(
+                'SELECT fecser, toro, calor, fecparto, tipoparto, orecria1, nomcria1,'
+                ' sexcria1, hacer1, orecria2, nomcria2, sexcria2, hacer2, numser, fecultser'
+                ' FROM tabla2 WHERE codint = ?', (animal_t3['codint'],)
+            ).fetchone()
+            animal = dict(animal_t3)
+            if animal_t2:
+                for key in ['fecser', 'toro', 'calor', 'fecparto', 'tipoparto',
+                            'orecria1', 'nomcria1', 'sexcria1', 'hacer1',
+                            'orecria2', 'nomcria2', 'sexcria2', 'hacer2', 'numser', 'fecultser']:
+                    animal[key] = animal_t2[key]
+    finally:
         conn.close()
-        return jsonify({'success': False, 'error': 'No hay novillas'}), 404
 
-    # Validate index
-    if idx < 0:
-        idx = 0
-    if idx >= len(animales):
-        idx = len(animales) - 1
-
-    animal_id = animales[idx]['id']
-    tabla_origen = animales[idx]['tabla']
-
-    # Obtener datos completos
-    if tabla_origen == 'tabla2':
-        animal_row = conn.execute('SELECT * FROM tabla2 WHERE id = ?', (animal_id,)).fetchone()
-        animal = dict(animal_row)
-    else:
-        animal_t3 = conn.execute('SELECT * FROM tabla3 WHERE id = ?', (animal_id,)).fetchone()
-        animal_t2 = conn.execute('SELECT fecser, toro, calor, fecparto, tipoparto, orecria1, nomcria1, sexcria1, hacer1, orecria2, nomcria2, sexcria2, hacer2, numser, fecultser FROM tabla2 WHERE codint = ?', (animal_t3['codint'],)).fetchone()
-        animal = dict(animal_t3)
-        if animal_t2:
-            for key in ['fecser', 'toro', 'calor', 'fecparto', 'tipoparto', 'orecria1', 'nomcria1', 'sexcria1', 'hacer1', 'orecria2', 'nomcria2', 'sexcria2', 'hacer2', 'numser', 'fecultser']:
-                animal[key] = animal_t2[key]
-
-    conn.close()
-
-    # Format dates
-    def format_fecha(fecha_str):
-        if not fecha_str:
-            return '—'
-        try:
-            meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC']
-            d = datetime.strptime(fecha_str, '%Y-%m-%d')
-            return f"{d.day:02d}/{meses[d.month-1]}/{d.year}"
-        except:
-            return fecha_str or '—'
-
-    # PAC mapping
     pac_val = str(animal.get('pac', '')).upper().strip()
-    pac_map = {'A': 'Abierta', 'P': 'Preñada'}
-    pac_color = {'A': 'danger', 'P': 'success'}
 
     return jsonify({
         'success': True,
@@ -403,8 +362,8 @@ def api_get_novilla(idx):
             'registro': animal.get('registro') or '—',
             'fecest': format_fecha(animal.get('fecest')),
             'fecest_raw': animal.get('fecest') or '',
-            'diagnostico': pac_map.get(pac_val, '') if pac_val else '',
-            'diagnostico_color': pac_color.get(pac_val, 'secondary'),
+            'diagnostico': PAC_MAP.get(pac_val, '') if pac_val else '',
+            'diagnostico_color': PAC_COLOR.get(pac_val, 'secondary'),
             'numser': animal.get('numser') or '0',
             'fecultser': format_fecha(animal.get('fecultser')),
             'fecultser_raw': animal.get('fecultser') or '',
@@ -1142,25 +1101,28 @@ def update_ordenos(animal_id):
     conn = get_db(session_id)
     idx = request.form.get('idx', 0, type=int)
 
-    # Normalizar coma a punto (teclados iOS/Android en español)
-    ord1 = request.form.get('ord1', '').strip().replace(',', '.')
-    ord2 = request.form.get('ord2', '').strip().replace(',', '.')
-    ord3 = request.form.get('ord3', '').strip().replace(',', '.')
+    ord1, err = parsear_ordeno(request.form.get('ord1', ''))
+    if err:
+        conn.close()
+        flash(err, 'danger')
+        return redirect(url_for('principal.index', idx=idx, tab='ordenos'))
+    ord2, err = parsear_ordeno(request.form.get('ord2', ''))
+    if err:
+        conn.close()
+        flash(err, 'danger')
+        return redirect(url_for('principal.index', idx=idx, tab='ordenos'))
+    ord3, err = parsear_ordeno(request.form.get('ord3', ''))
+    if err:
+        conn.close()
+        flash(err, 'danger')
+        return redirect(url_for('principal.index', idx=idx, tab='ordenos'))
 
-    ord1 = float(ord1) if ord1 else None
-    ord2 = float(ord2) if ord2 else None
-    ord3 = float(ord3) if ord3 else None
-
-    # Validar maximo 80 KG
-    for val in (ord1, ord2, ord3):
-        if val is not None and val > 80.0:
-            flash('El valor de ordeño no puede superar 80 KG.', 'danger')
-            return redirect(url_for('principal.index', idx=idx, tab='ordenos'))
-
-    conn.execute('UPDATE tabla2 SET ord1=?, ord2=?, ord3=? WHERE id=?',
-                 (ord1, ord2, ord3, animal_id))
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute('UPDATE tabla2 SET ord1=?, ord2=?, ord3=? WHERE id=?',
+                     (ord1, ord2, ord3, animal_id))
+        conn.commit()
+    finally:
+        conn.close()
 
     flash('Ordeños guardados.', 'success')
     return redirect(url_for('principal.index', idx=idx, tab='ordenos'))
@@ -1179,12 +1141,12 @@ def update_sanitario(animal_id):
 
     conn = get_db(session_id)
     idx = request.form.get('idx', 0, type=int)
-
     cart = request.form.get('cart', '').strip() or None
-
-    conn.execute('UPDATE tabla2 SET cart=? WHERE id=?', (cart, animal_id))
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute('UPDATE tabla2 SET cart=? WHERE id=?', (cart, animal_id))
+        conn.commit()
+    finally:
+        conn.close()
 
     if is_ajax:
         return jsonify({'success': True, 'message': 'Sanitario guardado'})
@@ -1193,107 +1155,51 @@ def update_sanitario(animal_id):
     return redirect(url_for('principal.index', idx=idx, tab='sanitario'))
 
 
-# ---- RUTAS PARA BORRAR DATOS ----
+# ---- RUTA UNIFICADA PARA BORRAR DATOS ----
 
-@bp.route('/principal/animal/<int:animal_id>/borrar/servicios', methods=['POST'])
-def borrar_servicios(animal_id):
+# Mapeo de evento → (campos a poner en NULL, mensaje flash, tab de retorno)
+_BORRAR_CONFIG = {
+    'servicios': ('UPDATE tabla2 SET fecser=NULL, toro=NULL, calor=NULL, numser=NULL WHERE id=?',
+                  'Servicio eliminado.', 'servicios'),
+    'secas':     ('UPDATE tabla2 SET fecseca=NULL WHERE id=?',
+                  'Seca eliminada.', 'secas'),
+    'chequeo':   ('UPDATE tabla2 SET fecchp=NULL, panew=NULL WHERE id=?',
+                  'Chequeo eliminado.', 'chequeo'),
+    'partos':    ('UPDATE tabla2 SET fecparto=NULL, tipoparto=NULL, orecria1=NULL, nomcria1=NULL,'
+                  ' sexcria1=NULL, hacer1=NULL, orecria2=NULL, nomcria2=NULL, sexcria2=NULL, hacer2=NULL WHERE id=?',
+                  'Parto eliminado.', 'partos'),
+    'salidas':   ('UPDATE tabla2 SET fecsale=NULL, motsale=NULL WHERE id=?',
+                  'Salida eliminada.', 'salidas'),
+    'ordenos':   ('UPDATE tabla2 SET ord1=NULL, ord2=NULL, ord3=NULL WHERE id=?',
+                  'Ordeños eliminados.', 'ordenos'),
+    'sanitario': ('UPDATE tabla2 SET cart=NULL WHERE id=?',
+                  'Registro sanitario eliminado.', 'sanitario'),
+}
+
+
+@bp.route('/principal/animal/<int:animal_id>/borrar/<evento>', methods=['POST'])
+def borrar_evento(animal_id, evento):
+    """Ruta unificada para borrar cualquier evento de un animal."""
+    config = _BORRAR_CONFIG.get(evento)
+    if not config:
+        flash('Evento no reconocido.', 'danger')
+        return redirect(url_for('principal.index'))
+
     session_id = _get_session_id()
     if not session_id:
         return redirect(url_for('main.index'))
-    conn = get_db(session_id)
+
+    sql, mensaje, tab = config
     idx = request.form.get('idx', 0, type=int)
-    conn.execute('UPDATE tabla2 SET fecser=NULL, toro=NULL, calor=NULL WHERE id=?', (animal_id,))
-    conn.commit()
-    conn.close()
-    flash('Servicio eliminado.', 'success')
-    return redirect(url_for('principal.index', idx=idx, tab='servicios'))
-
-
-@bp.route('/principal/animal/<int:animal_id>/borrar/secas', methods=['POST'])
-def borrar_secas(animal_id):
-    session_id = _get_session_id()
-    if not session_id:
-        return redirect(url_for('main.index'))
     conn = get_db(session_id)
-    idx = request.form.get('idx', 0, type=int)
-    conn.execute('UPDATE tabla2 SET fecseca=NULL WHERE id=?', (animal_id,))
-    conn.commit()
-    conn.close()
-    flash('Seca eliminada.', 'success')
-    return redirect(url_for('principal.index', idx=idx, tab='secas'))
+    try:
+        conn.execute(sql, (animal_id,))
+        conn.commit()
+    finally:
+        conn.close()
 
-
-@bp.route('/principal/animal/<int:animal_id>/borrar/chequeo', methods=['POST'])
-def borrar_chequeo(animal_id):
-    session_id = _get_session_id()
-    if not session_id:
-        return redirect(url_for('main.index'))
-    conn = get_db(session_id)
-    idx = request.form.get('idx', 0, type=int)
-    conn.execute('UPDATE tabla2 SET fecchp=NULL, panew=NULL WHERE id=?', (animal_id,))
-    conn.commit()
-    conn.close()
-    flash('Chequeo eliminado.', 'success')
-    return redirect(url_for('principal.index', idx=idx, tab='chequeo'))
-
-
-@bp.route('/principal/animal/<int:animal_id>/borrar/partos', methods=['POST'])
-def borrar_partos(animal_id):
-    session_id = _get_session_id()
-    if not session_id:
-        return redirect(url_for('main.index'))
-    conn = get_db(session_id)
-    idx = request.form.get('idx', 0, type=int)
-    conn.execute('''UPDATE tabla2 SET fecparto=NULL, tipoparto=NULL,
-                    orecria1=NULL, nomcria1=NULL, sexcria1=NULL, hacer1=NULL,
-                    orecria2=NULL, nomcria2=NULL, sexcria2=NULL, hacer2=NULL
-                    WHERE id=?''', (animal_id,))
-    conn.commit()
-    conn.close()
-    flash('Parto eliminado.', 'success')
-    return redirect(url_for('principal.index', idx=idx, tab='partos'))
-
-
-@bp.route('/principal/animal/<int:animal_id>/borrar/salidas', methods=['POST'])
-def borrar_salidas(animal_id):
-    session_id = _get_session_id()
-    if not session_id:
-        return redirect(url_for('main.index'))
-    conn = get_db(session_id)
-    idx = request.form.get('idx', 0, type=int)
-    conn.execute('UPDATE tabla2 SET fecsale=NULL, motsale=NULL WHERE id=?', (animal_id,))
-    conn.commit()
-    conn.close()
-    flash('Salida eliminada.', 'success')
-    return redirect(url_for('principal.index', idx=idx, tab='salidas'))
-
-
-@bp.route('/principal/animal/<int:animal_id>/borrar/ordenos', methods=['POST'])
-def borrar_ordenos(animal_id):
-    session_id = _get_session_id()
-    if not session_id:
-        return redirect(url_for('main.index'))
-    conn = get_db(session_id)
-    idx = request.form.get('idx', 0, type=int)
-    conn.execute('UPDATE tabla2 SET ord1=NULL, ord2=NULL, ord3=NULL WHERE id=?', (animal_id,))
-    conn.commit()
-    conn.close()
-    flash('Ordeños eliminados.', 'success')
-    return redirect(url_for('principal.index', idx=idx, tab='ordenos'))
-
-
-@bp.route('/principal/animal/<int:animal_id>/borrar/sanitario', methods=['POST'])
-def borrar_sanitario(animal_id):
-    session_id = _get_session_id()
-    if not session_id:
-        return redirect(url_for('main.index'))
-    conn = get_db(session_id)
-    idx = request.form.get('idx', 0, type=int)
-    conn.execute('UPDATE tabla2 SET cart=NULL WHERE id=?', (animal_id,))
-    conn.commit()
-    conn.close()
-    flash('Registro sanitario eliminado.', 'success')
-    return redirect(url_for('principal.index', idx=idx, tab='sanitario'))
+    flash(mensaje, 'success')
+    return redirect(url_for('principal.index', idx=idx, tab=tab))
 
 
 @bp.route('/principal/ver-tabla')

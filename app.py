@@ -2,10 +2,7 @@ import os
 from datetime import timedelta
 from flask import Flask
 import config
-
-# Constante para formateo de fechas (evita recrear en cada llamada)
-MESES = ('ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN',
-         'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC')
+from services.helpers import format_fecha
 
 
 def create_app():
@@ -25,18 +22,7 @@ def create_app():
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
 
     # Filtro para formatear fechas a DD/MES/AAAA (ej: 01/ENE/2024)
-    @app.template_filter('fecha')
-    def formato_fecha(value):
-        if not value:
-            return '—'
-        try:
-            partes = str(value).split('-')
-            if len(partes) == 3:
-                anio, mes, dia = partes
-                return f"{dia}/{MESES[int(mes) - 1]}/{anio}"
-            return value
-        except:
-            return value
+    app.jinja_env.filters['fecha'] = format_fecha
 
     # Ensure required directories exist
     os.makedirs(config.UPLOAD_FOLDER, exist_ok=True)
